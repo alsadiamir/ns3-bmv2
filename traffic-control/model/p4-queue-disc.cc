@@ -30,6 +30,8 @@
 #include <iterator>
 #include <chrono>
 #include <thread>
+#include "ns3/ethernet-header.h"
+#include "ns3/udp-header.h"
 
 namespace ns3 {
 
@@ -293,8 +295,73 @@ P4QueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   std_meta.flow_hash = item->Hash (); //TODO(sibanez): include perturbation?
   std_meta.ingress_trigger = true;
 
+  // Ptr<Packet> copy = item->GetPacket()->Copy();
+
+  // std::cout << copy->ToString() << std::endl;
+  // std::cout << copy->GetSize() << std::endl;
+
+
+  // UdpHeader udpHeader;
+  // if (copy->PeekHeader(udpHeader)) {
+  //   std::cout << "UDP Header:" << std::endl;
+  //   std::cout << "Source Port: " << udpHeader.GetSourcePort() << std::endl;
+  //   std::cout << "Destination Port: " << udpHeader.GetDestinationPort() << std::endl;
+  //   std::cout << std::endl;
+  // }
+
+  // EthernetHeader ethHeader;
+  // if (copy->PeekHeader(ethHeader)) {
+  //   std::cout << "Ethernet Header:" << std::endl;
+  //   std::cout << "Source: " << ethHeader.GetSource() << std::endl;
+  //   std::cout << "Destination: " << ethHeader.GetDestination() << std::endl;
+  //   std::cout << std::endl;
+  // }
+
+  // // Print the packet to verify serialization
+
+  // item->GetPacket()->Print(std::cout);
+
+  // //peek ethernet header from 
+  // EthernetHeader ethHeader;
+  // if (item->GetPacket()->PeekHeader(ethHeader))
+  // {
+  //   Mac48Address src = ethHeader.GetSource();
+  //   Mac48Address dst = ethHeader.GetDestination();
+  //   uint16_t etherType = 513;
+
+  //   uint64_t srcInt = 0;
+  //   uint8_t srcBytes[6];
+  //   src.CopyTo(srcBytes);
+  //   for (int i = 0; i < 6; ++i)
+  //   {
+  //     srcInt = (srcInt << 8) | srcBytes[i];
+  //   }
+
+  //   uint64_t dstInt = 0;
+  //   uint8_t dstBytes[6];
+  //   dst.CopyTo(dstBytes);
+  //   for (int i = 0; i < 6; ++i)
+  //   {
+  //     dstInt = (dstInt << 8) | dstBytes[i];
+  //   }
+
+  //   // phv->get_field("ethernet.dstAddr").set(srcInt);
+  //   // phv->get_field("ethernet.srcAddr").set(dstInt);
+  //   // phv->get_field("ethernet.etherType").set(etherType);
+
+  //   std::cout << "Ethernet Header: " << std::endl;
+  //   std::cout << "Source: " << src << std::endl;
+  //   std::cout << "Destination: " << dst << std::endl;
+  //   std::cout << "EtherType: " << etherType << std::endl;
+  // }
+
+  // Header *ethernet_header;
+  // item->GetPacket()->PeekHeader(ethernet_header, 14);
+
   // perform P4 processing
   Ptr<Packet> new_packet = m_p4Pipe->process_pipeline(item->GetPacket(), std_meta);
+
+
 
   // update trace variables
   m_p4Var1 = std_meta.trace_var1;

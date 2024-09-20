@@ -50,13 +50,15 @@ const uint_t cBeta = 1250; //20;
 
 typedef bit<48>  EthernetAddress;
 
-header Ethernet_h {
+header Ethernet_h 
+{
     EthernetAddress dstAddr;
     EthernetAddress srcAddr;
     bit<16>         etherType;
 }
 
-struct Parsed_packet {
+struct Parsed_packet 
+{
     Ethernet_h    ethernet;
 }
 
@@ -66,7 +68,8 @@ struct metadata_t {
 parser parserI(packet_in pkt,
                out Parsed_packet hdr,
                inout metadata_t meta,
-               inout standard_metadata_t stdmeta) {
+               inout standard_metadata_t stdmeta) 
+{
     state start {
         pkt.extract(hdr.ethernet);
         transition accept;
@@ -74,7 +77,8 @@ parser parserI(packet_in pkt,
 }
 
 control DeparserI(packet_out packet,
-                  in Parsed_packet hdr) {
+                  in Parsed_packet hdr) 
+{
     apply { packet.emit(hdr.ethernet); }
 }
 
@@ -199,17 +203,20 @@ control cIngress(inout Parsed_packet hdr,
 
 control cEgress(inout Parsed_packet hdr,
                 inout metadata_t meta,
-                inout standard_metadata_t stdmeta) {
+                inout standard_metadata_t stdmeta) 
+{
     apply { }
 }
 
 control vc(inout Parsed_packet hdr,
-           inout metadata_t meta) {
+           inout metadata_t meta) 
+{
     apply { }
 }
 
 control uc(inout Parsed_packet hdr,
-           inout metadata_t meta) {
+           inout metadata_t meta) 
+{
     apply { }
 }
 

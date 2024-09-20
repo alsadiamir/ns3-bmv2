@@ -34,6 +34,11 @@
 #include <thread>
 
 #include "p4-pipeline.h"
+#include "ns3/ethernet-header.h"
+#include "ns3/udp-header.h"
+#include "ns3/ipv4-header.h"
+#include "ns3/ethernet-header.h"
+#include "ns3/tcp-header.h"
 
 // NOTE: do not include "ns3/log.h" because of name conflict with LOG_DEBUG
 
@@ -44,6 +49,18 @@ extern int import_primitives();
 namespace ns3 {
 
 namespace {
+
+uint64_t Mac48AddressToLongInt(Mac48Address address) {
+    uint8_t buf[6];
+    address.CopyTo(buf);
+    
+    uint64_t longInt = 0;
+    for (int i = 0; i < 6; ++i) {
+        longInt = (longInt << 8) | buf[i];
+    }
+    return longInt;
+}
+
 
 struct hash_ex {
   uint32_t operator()(const char *buf, size_t s) const {
@@ -140,7 +157,16 @@ SimpleP4Pipe::SimpleP4Pipe (std::string jsonFile)
   add_required_field("standard_metadata", "trace_var3");
   add_required_field("standard_metadata", "trace_var4");
 
+  add_required_field("scalars", "userMetadata._stats_Median5");
+  add_required_field("scalars", "hash_posix_0");
+  add_required_field("ethernet", "srcAddr");
+  add_required_field("ethernet", "dstAddr");
+  add_required_field("ethernet", "etherType");
+
   force_arith_header("standard_metadata");
+  force_arith_header("scalars");
+  force_arith_header("ethernet");
+  // force_arith_header("stats");
 
   import_primitives();
 
@@ -175,7 +201,7 @@ SimpleP4Pipe::run_cli(std::string commandsFile) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   // Run the CLI commands to populate table entries
-  std::string cmd = "run_bmv2_CLI --thrift_port " + std::to_string(port) + " " + commandsFile;
+  std::string cmd = "/home/mininet/ns3-repos/ns-3-allinone/ns-3.29/src/bmv2-tools/run_bmv2_CLI --thrift_port " + std::to_string(port) + " " + commandsFile;
   std::system (cmd.c_str());
 }
 
@@ -264,6 +290,56 @@ SimpleP4Pipe::process_pipeline(Ptr<Packet> ns3_packet, std_meta_t &std_meta) {
   phv->get_field("standard_metadata.trace_var3").set(std_meta.trace_var3);
   phv->get_field("standard_metadata.trace_var4").set(std_meta.trace_var4);
 
+
+  std::cout << ns3_packet->ToString() << std::endl;
+
+  // Ptr<Packet> copy = ns3_packet->Copy();
+
+  // std::cout << ns3_packet->ToString() << std::endl;
+
+  EthernetHeader ethHeader;
+  if (ns3_packet->PeekHeader(ethHeader)) {
+      // Mac48Address src = ethHeader.GetSource();
+      // Mac48Address dst = ethHeader.GetDestination();
+      // uint16_t ethertype = ethHeader.GetLengthType();
+      // std::cout << "Ethernet Source: " << src << " Destination: " << dst << " EtherType: " << ethertype << std::endl;
+      ns3_packet->RemoveHeader(ethHeader);
+  }
+  
+  Ipv4Header ipHeader;
+  if (ns3_packet->PeekHeader(ipHeader)) {
+      // Ipv4Address src = ipHeader.GetSource();
+      // Ipv4Address dst = ipHeader.GetDestination();
+      // std::cout << "IP Source: " << src << " Destination: " << dst << std::endl;
+      ns3_packet->RemoveHeader(ipHeader);
+  }
+  if (ipHeader.GetProtocol() == 17) {
+      std::cout <<  "UDP Packet" << std::endl;
+      UdpHeader udpHeader;
+      if (ns3_packet->PeekHeader(udpHeader)) {
+          // uint16_t srcPort = udpHeader.GetSourcePort();
+          // uint16_t dstPort = udpHeader.GetDestinationPort();
+          // std::cout << "UDP Source Port: " << srcPort << " Destination Port: " << dstPort << std::endl;
+          ns3_packet->RemoveHeader(udpHeader);
+      }
+  } else {
+    if (ipHeader.GetProtocol() == 6) {
+      std::cout << "TCP Packet" << std::endl;
+      TcpHeader tcpHeader;
+      if (ns3_packet->PeekHeader(tcpHeader)) {
+          // uint16_t srcPort = tcpHeader.GetSourcePort();
+          // uint16_t dstPort = tcpHeader.GetDestinationPort();
+          // std::cout << "TCP Source Port: " << srcPort << " Destination Port: " << dstPort << std::endl;
+          ns3_packet->RemoveHeader(tcpHeader);
+      }
+    }
+  }
+
+  phv->get_field("ethernet.srcAddr").set(Mac48AddressToLongInt(ethHeader.GetSource()));
+  phv->get_field("ethernet.dstAddr").set(Mac48AddressToLongInt(ethHeader.GetDestination()));
+  phv->get_field("ethernet.etherType").set(ethHeader.GetLengthType());
+
+
   BMLOG_DEBUG_PKT(*packet, "Processing received packet");
 
   /* Invoke Parser */
@@ -282,6 +358,20 @@ SimpleP4Pipe::process_pipeline(Ptr<Packet> ns3_packet, std_meta_t &std_meta) {
   std_meta.trace_var2 = phv->get_field("standard_metadata.trace_var2").get_int();
   std_meta.trace_var3 = phv->get_field("standard_metadata.trace_var3").get_int();
   std_meta.trace_var4 = phv->get_field("standard_metadata.trace_var4").get_int();
+  // uint16_t median = phv->get_field("stats._stats_Median5").get_int();
+
+  uint64_t ethSource = phv->get_field("ethernet.srcAddr").get_uint64();
+  uint64_t ethDest = phv->get_field("ethernet.dstAddr").get_uint64();
+  uint16_t etherType = phv->get_field("ethernet.etherType").get_uint();
+  uint16_t hash_posix = phv->get_field("scalars.hash_posix_0").get_uint();
+  uint16_t median = phv->get_field("scalars.userMetadata._stats_Median5").get_uint();
+
+  std::cout << "After Deparser:" << std::endl;
+  std::cout << "Hash: " << hash_posix << std::endl;
+  std::cout << "Traced hash: " << std_meta.trace_var1 << std::endl;
+  std::cout << "Median: " << median << std::endl;
+  std::cout << "Ethernet Source: " << ethSource << " Destination: " << ethDest << " EtherType: " << etherType << std::endl;
+
 
   /* Set drop and mark fields */
   int drop = phv->get_field("standard_metadata.drop").get_int();
