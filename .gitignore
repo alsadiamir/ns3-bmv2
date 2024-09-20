@@ -34,6 +34,7 @@ network/*
 nix-vector-routing/*
 olsr/*
 openflow/*
+p4-pipeline/*
 point-to-point/*
 point-to-point-layout/*
 propagation/*
@@ -64,6 +65,8 @@ traffic-control/model/fq-codel-queue-disc.cc
 traffic-control/model/fq-codel-queue-disc.h
 traffic-control/model/mq-queue-disc.cc
 traffic-control/model/mq-queue-disc.h
+traffic-control/model/p4-queue-disc.cc
+traffic-control/model/p4-queue-disc.h
 traffic-control/model/packet-filter.cc
 traffic-control/model/packet-filter.h
 traffic-control/model/pfifo-fast-queue-disc.cc
@@ -86,6 +89,9 @@ traffic-control/examples/pfifo-vs-red.cc
 traffic-control/examples/pie-example.cc
 traffic-control/examples/red-tests.cc
 traffic-control/examples/red-vs-ared.cc
+traffic-control/examples/simple-p4-qdisc.cc
+traffic-control/examples/tocken-bucket-test.cc
+traffic-control/examples/track-qsize-test.cc
 traffic-control/examples/wscript
 
 network/utils/address-utils.cc
