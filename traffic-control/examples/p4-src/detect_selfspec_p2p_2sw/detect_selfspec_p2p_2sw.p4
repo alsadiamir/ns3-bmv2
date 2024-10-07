@@ -25,7 +25,7 @@
 // In microseconds: 1048576us ~ 1sec.
 // 10 windows = 10sec.
 // 2-standard deviation from mean is considered anomalous.
-#define BUCKET_SIZE 15
+#define BUCKET_SIZE 19
 #define WINDOW_SIZE 10
 #define SPLIT_SIZE 5
 #define STDEV_RANGE 2
@@ -56,12 +56,6 @@
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
-
-// header ethernet_t {
-//   macAddr_t dstAddr;
-//   macAddr_t srcAddr;
-//   bit<16>   etherType;
-// }
 
 header p2p_t{
   //towaste
@@ -148,14 +142,16 @@ control MyIngress(inout headers hdr,
   register<bit<8>>(1) mode_s;
   register<bit<8>>(1) path_s;
 
-  register<bit<16>>(1) ticks_s;
-  register<bit<8>>(1) rotate_s;
-  register<bit<8>>(1) packet_track;
-  register<bit<16>>(1) attack_packet_count;
-  register<bit<16>>(1) peak_packet_count;
-  register<bit<32>>(1) peak_nval;
+  // register<bit<16>>(1) ticks_s;
+  // register<bit<8>>(1) rotate_s;
+  // register<bit<8>>(1) packet_track;
+  // register<bit<16>>(1) attack_packet_count;
+  // register<bit<16>>(1) peak_packet_count;
+  // register<bit<32>>(1) peak_nval;
 
   register<bit<8>>(1)  counter_value_s;
+  register<bit<1>>(1)  sent_s;
+  register<bit<32>>(1) packets_s;
 
   // Normal L2 learning tables
   action drop() {
@@ -244,15 +240,6 @@ control MyIngress(inout headers hdr,
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 10, 0);
   }
 
-  // action set_debug(bit<32> alert, bit<32> counter_value, bit<32> subnet, bit<32> ip, bit<32> lfa) {
-  //   hdr.debug.setValid();
-  //   hdr.debug.alert = alert;
-  //   hdr.debug.counter_value = counter_value;
-  //   hdr.debug.subnet = subnet;
-  //   hdr.debug.ip = ip;
-  //   hdr.debug.lfa = lfa;
-  // }
-
   table dest_prefix_track {
     key = {
       hdr.ipv4.dstAddr: lpm;
@@ -289,6 +276,8 @@ control MyIngress(inout headers hdr,
     bit<16> atk_pkt_count;
     bit<16> peak_pkt_count;
     bit<32> peak;
+    bit<1> sent;
+    bit<32> packets;
 
     // hdr.debug.setInvalid();     
   
@@ -299,22 +288,34 @@ control MyIngress(inout headers hdr,
     mode_s.read(mode, 0);
     path_s.read(path, 0);
     median_s.read(median, 0);
-    ticks_s.read(ticks, 0);
+    // ticks_s.read(ticks, 0);
 
     d_subnet.read(detected_subnet, 0);
     d_ip.read(detected_ip, 0);
     last_bucket_stamp.read(last_stamp, 0);
     isLfa.read(lfa, 0);
-    rotate_s.read(rotate, 0);
-    packet_track.read(pkt_track, 0);
-    attack_packet_count.read(atk_pkt_count, 0);
-    peak_packet_count.read(peak_pkt_count, 0);
-    peak_nval.read(peak, 0);
+    packets_s.read(packets, 0);
+    // rotate_s.read(rotate, 0);
+    // packet_track.read(pkt_track, 0);
+    // attack_packet_count.read(atk_pkt_count, 0);
+    // peak_packet_count.read(peak_pkt_count, 0);
+    // peak_nval.read(peak, 0);
+    sent_s.read(sent, 0);
 
     //SET COUNTER
     if (hdr.ipv4.isValid() && window_track.apply().hit) {
       dest_prefix_track.apply();
-      // d_subnet.write(0, hdr.ipv4.dstAddr);
+      packets_s.write(0, packets + 1);
+      
+      if(hdr.ipv4.isValid() && hdr.ipv4.tos == 16 && mode != ENTROPY){
+        reset_counters();
+        mode_s.write(0, ENTROPY);
+        mode = ENTROPY;
+        stage_s.write(0, 1);
+        stage = 1;
+        hdr.ipv4.tos = 0;
+      }
+      hdr.ipv4.tos = 0;
       switch (mode) {
         ANOMALY: {
           bit<16> tmp;
@@ -338,9 +339,11 @@ control MyIngress(inout headers hdr,
           bit<8> hash_posix;
           bit<32> index;
 
-          if (bucket_idx == WINDOW_SIZE) {
-            bucket_idx = 0;
-          }
+          // if (bucket_idx == WINDOW_SIZE) {
+          //   bucket_idx = 0;
+          // }
+          // Increment the packets bucket
+          stats_push_freq(tmp, bucket_idx, COUNTER_TOPLEVEL);
 
           stats_get_data(meta.stats, COUNTER_REFINE);
           stats_freq_internal.read(tmp, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
@@ -355,7 +358,7 @@ control MyIngress(inout headers hdr,
           tmpDistinctFlowsByte = tmpDistinctFlowsByte >> 255;
 
           if(tmpDistinctFlowsByte == 0){
-            median_90_tick(COUNTER_REFINE);
+            median_tick(COUNTER_REFINE);
             stats_push_freq(tmp, bucket_idx, COUNTER_REFINE); 
             tmpDistinctFlowsByte = 1;
             tmpDistinctFlowsByte = tmpDistinctFlowsByte << 255;
@@ -385,21 +388,14 @@ control MyIngress(inout headers hdr,
 
               drop_bucket(bucket_idx, COUNTER_TOPLEVEL);
               if(hdr.tcp.isValid()){
-                // hdr.ipv4.protocol = PROTO_STAGE;
-                // set_debug(ANOMALY, meta.counter_value, 0, 0, 0);
                 stats_freq_internal.read(median, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
-              }            
+              }     
+              
+              if(hdr.ipv4.dstAddr != 0x0a000001){
+                hdr.ipv4.tos = 16;      
+                sent_s.write(0, 1);
+              }
             }
-
-            // if(nval > peak){
-            //   //every time a bigger nval is detected, we reset the peak count
-            //   peak_nval.write(0, nval);
-            //   peak_packet_count.write(0, 0);
-            // } else{
-            //   if(peak_pkt_count == 0){
-            //     peak_packet_count.write(0, atk_pkt_count);
-            //   }
-            // }
 
             // Push bucket.
             bucket_idx = bucket_idx + 1;
@@ -413,14 +409,7 @@ control MyIngress(inout headers hdr,
             drop_bucket(bucket_idx, COUNTER_TOPLEVEL);
             drop_bucket(bucket_idx, COUNTER_REFINE);
             next_bucket.write(0, bucket_idx);
-            //update rotation
-            // if(ticks<WINDOW_SIZE){
-            //   ticks_s.write(0, ticks + 1); //change mode each x ticks
-            // }
           }
-
-          // Increment the packets bucket
-          stats_push_freq(tmp, bucket_idx, COUNTER_TOPLEVEL);
         }
         SYN: { 
             subnet = hdr.ipv4.dstAddr >> 8;
@@ -519,16 +508,12 @@ control MyIngress(inout headers hdr,
                 reset_counters();
                 subnetStart = (bit<16>) 0x0a01 ++ (bit<8>) (meta.counter_value);
                 subnet = subnetStart ++ (bit<8>) 0;
-                d_subnet.write(0, subnet);   
-                // if(detected_subnet == 0){
-                //   set_debug(ENTROPY, meta.counter_value, subnet, 0, 0);
-                // }   
+                d_subnet.write(0, subnet);    
               } else if(stage == 2){
                 subnet = hdr.ipv4.dstAddr >> 8;
                 subnet = subnet << 8;
                 if(subnet == detected_subnet && detected_ip == 0){
                   d_ip.write(0, meta.counter_value);
-                  // set_debug(ENTROPY, meta.counter_value, subnet, meta.counter_value, 0);
                 }
               }
             } 
@@ -556,28 +541,9 @@ control MyIngress(inout headers hdr,
 
             if(median!=0 && newmedian!=0 && 
               newmedian > median) {
-              // set_debug(LFA, (bit<32>)newmedian, 0, 0, 1);
               isLfa.write(0,1);
               median_s.write(1, newmedian);
-              // packet_track.write(0, 0);
             } 
-            
-            // // && saved_stage == 1
-            // hash(index, HashAlgorithm.crc32,  32w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 32w8);
-            // //hash and then put to data structure
-            // hash(hash_posix, HashAlgorithm.crc32, 32w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 32w256); // must be interpreted as 256-ix
-
-            // bit<32> dst = hdr.ipv4.dstAddr;
-            // dst = dst << 8;
-            // dst = dst >> 8;
-
-            // && saved_stage == 1
-            // hash(index, HashAlgorithm.crc32,  32w0, {dst}, 32w8);
-            //hash and then put to data structure
-            // hash(hash_posix, HashAlgorithm.crc32, 32w0, {dst}, 32w256); // must be interpreted as 256-ix
-
-            // hdr.debug.index = meta.index;
-            // hdr.debug.hash_posix = meta.hash_posix;
 
             distinctFlows.read(tmpDistinctFlowsCurrent, meta.index);        
             tmpDistinctFlowsByte = tmpDistinctFlowsCurrent << (bit<8>) meta.hash_posix;
@@ -650,25 +616,15 @@ parser MyParser(packet_in packet,
   state start {
     packet.extract(hdr.p2p);
     transition ipv4;
-    // transition select(hdr.p2p.proto) {
-    //   TYPE_IPV4: ipv4;
-    //   default: accept;
-    // }
   }
 
   state ipv4 {
     packet.extract(hdr.ipv4);
     transition select(hdr.ipv4.protocol) {
       PROTO_TCP: tcp;
-      // PROTO_UDP: udp;
       default: accept;
     }
   }
-
-  // state udp {
-  //   packet.extract(hdr.udp);
-  //   transition accept;
-  // }
 
   state tcp {
     packet.extract(hdr.tcp);
@@ -684,7 +640,10 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 control MyDeparser(packet_out packet, in headers hdr) 
 {
   apply {
-    packet.emit(hdr);
+    packet.emit(hdr.p2p);
+    packet.emit(hdr.ipv4);
+    packet.emit(hdr.tcp);
+
     // packet.emit(hdr.debug);
   }
 }
