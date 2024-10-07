@@ -3,4 +3,6 @@
 def build(bld):
     obj = bld.create_ns3_program('v1model-p4-pipeline-example', ['v1model-p4-pipeline'])
     obj.source = 'v1model-p4-pipeline-example.cc'
+    obj = bld.create_ns3_program('stat4-mitigation-entropy', ['v1model-p4-pipeline'])
+    obj.source = 'stat4-mitigation-entropy.cc'
 
