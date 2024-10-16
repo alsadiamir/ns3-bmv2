@@ -142,16 +142,10 @@ control MyIngress(inout headers hdr,
   register<bit<8>>(1) mode_s;
   register<bit<8>>(1) path_s;
 
-  // register<bit<16>>(1) ticks_s;
-  // register<bit<8>>(1) rotate_s;
-  // register<bit<8>>(1) packet_track;
-  // register<bit<16>>(1) attack_packet_count;
-  // register<bit<16>>(1) peak_packet_count;
-  // register<bit<32>>(1) peak_nval;
-
   register<bit<8>>(1)  counter_value_s;
   register<bit<1>>(1)  sent_s;
   register<bit<32>>(1) packets_s;
+  register<bit<1>>(1) deprio; 
 
   // Normal L2 learning tables
   action drop() {
@@ -278,6 +272,8 @@ control MyIngress(inout headers hdr,
     bit<32> peak;
     bit<1> sent;
     bit<32> packets;
+    bit<1> dep;
+    bit<9> egress_prio;
 
     // hdr.debug.setInvalid();     
   
@@ -295,12 +291,8 @@ control MyIngress(inout headers hdr,
     last_bucket_stamp.read(last_stamp, 0);
     isLfa.read(lfa, 0);
     packets_s.read(packets, 0);
-    // rotate_s.read(rotate, 0);
-    // packet_track.read(pkt_track, 0);
-    // attack_packet_count.read(atk_pkt_count, 0);
-    // peak_packet_count.read(peak_pkt_count, 0);
-    // peak_nval.read(peak, 0);
     sent_s.read(sent, 0);
+    deprio.read(dep, 0);
 
     //SET COUNTER
     if (hdr.ipv4.isValid() && window_track.apply().hit) {
@@ -476,9 +468,21 @@ control MyIngress(inout headers hdr,
           ip = hdr.ipv4.dstAddr << 24;
           ip = ip >> 24;
           
-          if(subnet == detected_subnet && detected_ip == ip){
-            drop();
+          if (dep == 1) {
+            if(subnet == detected_subnet && detected_ip == ip){
+              standard_metadata.egress_spec = 3;
+            } 
+            else{
+              hash(egress_prio, HashAlgorithm.crc32, 9w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 9w3);
+              standard_metadata.egress_spec = egress_prio;
+            }
+
+          } else { //default drop
+            if(subnet == detected_subnet && detected_ip == ip){
+              drop();
+            }
           }
+
           //get the stage
           switch (stage) {
             1: { //track subnets - 1

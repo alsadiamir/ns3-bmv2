@@ -36,14 +36,19 @@ void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCo
 
         // Install TCP OnOff client on the client node (to act as TCP sender)
         OnOffHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
-        // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("50Kbps")));  // Data rate
+        clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+        clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+        std::string dataRate = "50Kbps";
+        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate(dataRate)));  // Data rate
         clientHelper.SetAttribute("PacketSize", UintegerValue(1024));  // Packet size
         clientHelper.SetAttribute("MaxBytes", UintegerValue(250000)); // Max payload size in bytes
+        // double totalBitsToSend = 2240 * 8;  // Convert bytes to bits
+        // double rateInBps = atof(dataRate.c_str()) * 1e6;  // Convert Mbps to bps
+        // double transmissionTime = totalBitsToSend / rateInBps;  // Transmission time in seconds
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
-        clientApp.Start(Seconds(2.0 + i));  // Start each flow with a slight delay
+        clientApp.Start(Seconds(2.0));  // Start each flow with a slight delay
+        // clientApp.Stop(Seconds(2.0 + transmissionTime + 0.1*(i/36)));
         // StartBgSynApp(serverNodes.Get(i), clientNode, routerServerInterfaces, 2.0 + i);
     }
 }
@@ -62,14 +67,10 @@ void StartVolumetricFlow(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4In
 
         // Install TCP OnOff client on the client node (to act as TCP sender)
         OnOffHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
-        // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-<<<<<<< HEAD
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("5Mbps")));  // Data rate
-=======
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("100Mbps")));  // Data rate
->>>>>>> ed70ef6a165ec1196ab86baea4da45fb88725e05
-        clientHelper.SetAttribute("PacketSize", UintegerValue(256));  // Packet size
+        clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+        clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("7.5Kbps")));  // Data rate
+        clientHelper.SetAttribute("PacketSize", UintegerValue(1024));  // Packet size
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
         clientApp.Start(Seconds(5.0));  // Start each flow with a slight delay
@@ -85,21 +86,17 @@ void DropCallback(Ptr<const Packet> packet)
 
 int main(int argc, char *argv[])
 {
-<<<<<<< HEAD
     std::string outPcap = "trace-data/entropy/withattack";
     bool p4Enabled = false;
+    bool deprioEnabled = false;
     bool attackEnabled = false;
     
     CommandLine cmd;
     cmd.AddValue ("outPcap", "Simulation PCAP Destination folder", outPcap);
     cmd.AddValue ("p4Enabled", "Enable P4", p4Enabled);
+    cmd.AddValue ("deprioEnabled", "Enable Deprioritization, Default DROP", deprioEnabled);
     cmd.AddValue ("attackEnabled", "Enable Attack", attackEnabled);
     cmd.Parse (argc, argv);
-=======
-    // Set simulation time (in seconds)
-    // double simulationTime = 30.0;
-
->>>>>>> ed70ef6a165ec1196ab86baea4da45fb88725e05
 
     LogComponentEnable ("Stat4EntropyTracingExample", LOG_LEVEL_INFO);
     Packet::EnablePrinting ();
@@ -131,20 +128,16 @@ int main(int argc, char *argv[])
     routerToServers6.Add(serverNodes6);
 
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("3Mbps"));
+    p2p.SetDeviceAttribute("DataRate", StringValue("1.5Mbps"));
     p2p.SetChannelAttribute("Delay", TimeValue(NanoSeconds(20)));
 
     // Setup CSMA attributes
     CsmaHelper csma;
-    csma.SetChannelAttribute("DataRate", StringValue("3Mbps"));
+    csma.SetChannelAttribute("DataRate", StringValue("1Gbps"));
     csma.SetChannelAttribute("Delay", TimeValue(NanoSeconds(20)));
 
     // Install CSMA devices on the nodes
-<<<<<<< HEAD
     NetDeviceContainer clientRouterDevices = csma.Install(NodeContainer(clientNode, routerNode1));
-=======
-    NetDeviceContainer clientRouterDevices = p2p.Install(NodeContainer(clientNode, routerNode1));
->>>>>>> ed70ef6a165ec1196ab86baea4da45fb88725e05
     NetDeviceContainer router1Router2Devices = p2p.Install(NodeContainer(routerNode1, routerNode2));
     NetDeviceContainer routerServerDevices1 = csma.Install(routerToServers1);
     NetDeviceContainer routerServerDevices2 = csma.Install(routerToServers2);
@@ -153,11 +146,7 @@ int main(int argc, char *argv[])
     NetDeviceContainer routerServerDevices5 = csma.Install(routerToServers5);
     NetDeviceContainer routerServerDevices6 = csma.Install(routerToServers6);
 
-<<<<<<< HEAD
     Ptr<NetDevice> rDevice = router1Router2Devices.Get (0);
-=======
-    Ptr<NetDevice> rDevice = clientRouterDevices.Get (0);
->>>>>>> ed70ef6a165ec1196ab86baea4da45fb88725e05
 
     // Install Internet stack on all nodes
     InternetStackHelper internet;
@@ -172,23 +161,22 @@ int main(int argc, char *argv[])
     internet.Install(serverNodes5);
     internet.Install(serverNodes6);
 
-<<<<<<< HEAD
     if (p4Enabled){
         Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
-        customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p/detect_selfspec_p2p.json", "src/traffic-control/examples/p4-src/detect_selfspec_p2p/entropy.txt");
+        std::string file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy_1sw.txt";
+        if(deprioEnabled){
+            NS_LOG_INFO ("Deprioritization Enabled.");
+            file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy_deprio_1sw.txt";
+            customQueue->SetAttribute("MaxQueueSize", UintegerValue(10000));
+            // customQueue->SetAttribute("MinThreshold", UintegerValue(50));
+            // customQueue->SetAttribute("MaxThreshold", UintegerValue(80));
+            customQueue->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
+        } 
+        customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/detect_selfspec_p2p_2sw.json", file);
         Ptr<PointToPointNetDevice> p2pDevice = rDevice->GetObject<PointToPointNetDevice> ();
         p2pDevice->SetQueue(customQueue);
         NS_LOG_INFO ("P4 Enabled.");
     }
-=======
-
-    NS_LOG_INFO ("Configure Tracing.");
-    Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
-    customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p/detect_selfspec_p2p.json", "src/traffic-control/examples/p4-src/detect_selfspec_p2p/entropy.txt");
-    Ptr<PointToPointNetDevice> p2pDevice = rDevice->GetObject<PointToPointNetDevice> ();
-    p2pDevice->SetQueue(customQueue);
-
->>>>>>> ed70ef6a165ec1196ab86baea4da45fb88725e05
     // Assign IP addresses
     // Client and router
     Ipv4AddressHelper address;
@@ -236,7 +224,6 @@ int main(int argc, char *argv[])
     StartFlows(serverNodes5, clientNode, routerServerInterfaces5);
     StartFlows(serverNodes6, clientNode, routerServerInterfaces6);
 
-<<<<<<< HEAD
     if(attackEnabled){
         StartVolumetricFlow(serverNodes3, clientNode, routerServerInterfaces3);
         NS_LOG_INFO("Attack Enabled.");
@@ -244,11 +231,6 @@ int main(int argc, char *argv[])
     csma.EnablePcapAll(outPcap+"/packets");  // Trace packets on server side
     p2p.EnablePcapAll(outPcap+"/packets");  // Trace packets on
     NS_LOG_INFO ("PCAP packets will be written in folder: " << outPcap);
-=======
-    StartVolumetricFlow(serverNodes3, clientNode, routerServerInterfaces3);
-    csma.EnablePcapAll("trace-data/entropy/withattackwithdetection/packets");  // Trace packets on server side
-    p2p.EnablePcapAll("trace-data/entropy/withattackwithdetection/packets");  // Trace packets on
->>>>>>> ed70ef6a165ec1196ab86baea4da45fb88725e05
     
     // Enable routing globally
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();

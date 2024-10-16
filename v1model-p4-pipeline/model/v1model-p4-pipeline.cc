@@ -53,14 +53,14 @@ namespace ns3 {
 
   namespace {
 
-    // std::string IntToIp(uint32_t ip) {
-    //     std::ostringstream oss;
-    //     oss << ((ip >> 24) & 0xFF) << "."
-    //         << ((ip >> 16) & 0xFF) << "."
-    //         << ((ip >> 8) & 0xFF) << "."
-    //         << (ip & 0xFF);
-    //     return oss.str();
-    // }
+    std::string IntToIp(uint32_t ip) {
+        std::ostringstream oss;
+        oss << ((ip >> 24) & 0xFF) << "."
+            << ((ip >> 16) & 0xFF) << "."
+            << ((ip >> 8) & 0xFF) << "."
+            << (ip & 0xFF);
+        return oss.str();
+    }
 
     struct hash_ex {
       uint32_t operator()(const char *buf, size_t s) const {
@@ -99,6 +99,7 @@ namespace ns3 {
 
   V1ModelP4Pipe::V1ModelP4Pipe (std::string jsonFile)
   {
+    // thrift_port = port;
     // Required fields
     add_required_field("standard_metadata", "ingress_port");
     add_required_field("standard_metadata", "egress_spec");
@@ -120,31 +121,21 @@ namespace ns3 {
 
     add_required_field("standard_metadata", "parser_error");
     add_required_field("standard_metadata", "priority");
-    
-    // add_required_field("scalars", "userMetadata._index7");
-    // add_required_field("scalars", "userMetadata._hash_posix8");
 
-    // add_required_field("ethernet", "srcAddr");
-    // add_required_field("ethernet", "dstAddr");
-    // add_required_field("ethernet", "etherType");
+    // add_required_field("ipv4", "srcAddr");
+    // add_required_field("ipv4", "dstAddr");
+    // add_required_field("ipv4", "tos");
 
-    add_required_field("ipv4", "srcAddr");
-    add_required_field("ipv4", "dstAddr");
-
-    // add_required_field("udp", "srcPort");
-    // add_required_field("udp", "dstPort");
-
-    add_required_field("tcp", "srcPort");
-    add_required_field("tcp", "dstPort");
-    add_required_field("tcp", "flags");
+    // add_required_field("tcp", "srcPort");
+    // add_required_field("tcp", "dstPort");
+    // add_required_field("tcp", "flags");
 
     force_arith_header("standard_metadata");
     force_arith_header("userMetadata");
     force_arith_header("scalars");
     force_arith_header("p2p");
     force_arith_header("ipv4");
-    // force_arith_header("udp");
-    force_arith_header("tcp");
+    // force_arith_header("tcp");
 
     import_primitives();
 
@@ -164,6 +155,7 @@ namespace ns3 {
 
     int status = init_from_options_parser(opt_parser);
     if (status != 0) {
+      // std::cout << "Failed to initialize the P4 pipeline" << std::endl;
       BMLOG_DEBUG("Failed to initialize the P4 pipeline");
       std::exit(status);
     }
@@ -179,6 +171,7 @@ namespace ns3 {
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
     // Run the CLI commands to populate table entries
+    // std::cout << "Running CLI commands" << "On port" << port << std::endl;
     std::string cmd = "/home/mininet/ns3-repos/ns-3-allinone/ns-3.29/src/bmv2-tools/run_bmv2_CLI --thrift_port " + std::to_string(port) + " " + commandsFile;
     std::system (cmd.c_str());
   }
@@ -235,55 +228,48 @@ namespace ns3 {
     phv->get_field("standard_metadata.egress_rid").set(std_meta.egress_rid);
     phv->get_field("standard_metadata.checksum_error").set(std_meta.checksum_error);
     phv->get_field("standard_metadata.parser_error").set(std_meta.parser_error);
-    phv->get_field("standard_metadata.priority").set(std_meta.priority);
-    // phv->get_field("scalars.userMetadata._index7").set(index);
-    // phv->get_field("scalars.userMetadata._hash_posix8").set(hash_posix);
+    phv->get_field("standard_metadata.priority").set(0);
 
-    // std::cout << "BEFORE -- Index: " << index << " Hash posix: " << hash_posix << std::endl;
+    uint32_t priority = phv->get_field("standard_metadata.priority").get_uint();
+    bool isACCTurbo = false;
+    uint32_t egress_spec = 0;
+    do {
+      /* Invoke Parser */
+      parser->parse(packet.get());
 
-    /* Invoke Parser */
-    parser->parse(packet.get());
+      /* Invoke Match-Action */
+      mau->apply(packet.get());
 
-    /* Invoke Match-Action */
-    mau->apply(packet.get());
+      packet->reset_exit();      
+      priority = phv->get_field("standard_metadata.priority").get_uint();
+      egress_spec = phv->get_field("standard_metadata.egress_spec").get_uint();
+      std_meta.egress_spec = egress_spec;
+      deparser->deparse(packet.get());
+      if (priority == 1) {
+        isACCTurbo = true;
+      }
+    } while (priority == 1);
 
-    packet->reset_exit();
+    if(egress_spec == 511 && isACCTurbo == false) {
+      uint32_t ipDst = phv->get_field("ipv4.dstAddr").get_uint();
+      std::cout << "Egress spec: " << egress_spec << " " << IntToIp(ipDst) << std::endl;
+    } 
+    // else {
+    //   if(egress_spec == 3) {
+    //     if (isACCTurbo == true){
+    //       uint32_t dst0 = phv->get_field("ipv4.dst0").get_uint();
+    //       uint32_t dst1 = phv->get_field("ipv4.dst1").get_uint();
+    //       uint32_t dst2 = phv->get_field("ipv4.dst2").get_uint();
+    //       uint32_t dst3 = phv->get_field("ipv4.dst3").get_uint();
+    //       std::cout << "Egress spec: " << egress_spec << " " << dst0 << "." << dst1 << "." << dst2 << "." << dst3 << std::endl;
+    //     } else{
+    //       uint32_t ipDst = phv->get_field("ipv4.dstAddr").get_uint();
+    //       std::cout << "Egress spec: " << egress_spec << " " << IntToIp(ipDst) << std::endl;
+    //     }
 
-    
-    // std::cout << "Source Port: " << src_port << std::endl;
-
-    /* Invoke Deparser */
-    deparser->deparse(packet.get());
-
-    // uint32_t dst_ip = phv->get_field("ipv4.dstAddr").get_uint();
-    // uint32_t src_port = phv->get_field("tcp.srcPort").get_uint();
-    // uint32_t dst_port = phv->get_field("tcp.dstPort").get_uint();
-    // uint32_t seq_no = phv->get_field("tcp.seqNo").get_uint();
-    // uint32_t ack_no = phv->get_field("tcp.ackNo").get_uint();
-    // uint32_t dataOffset = phv->get_field("tcp.dataOffset").get_uint();
-    // uint32_t reserved = phv->get_field("tcp.reserved").get_uint();
-    // uint32_t flags = phv->get_field("tcp.flags").get_uint();
-    // uint32_t counter_value = phv->get_field("scalars.userMetadata._counter_value6").get_uint();
-    uint32_t egress_spec = phv->get_field("standard_metadata.egress_spec").get_uint();
-
-    // if (flags == 2 || flags==16)
-    // {
-    //   std::cout << "IPv4 Header: " << std::endl;
-    //   std::cout << "Destination IP: " << IntToIp(dst_ip) << std::endl;
-    //   std::cout << "TCP Header: " << std::endl;
-    //   std::cout << "Source Port: " << src_port << std::endl;
-    //   std::cout << "Destination Port: " << dst_port << std::endl;
-    //   std::cout << "Sequence Number: " << seq_no << std::endl;
-    //   std::cout << "Acknowledgement Number: " << ack_no << std::endl;
-    //   std::cout << "Data Offset: " << dataOffset << std::endl;
-    //   std::cout << "Reserved: " << reserved << std::endl;
-    //   std::cout << "Flags: " << flags << std::endl;
-      // std::cout << "Counter Value: " << counter_value << std::endl;
+    //   } 
     // }
-    std::cout << "Egress Spec: " << egress_spec << std::endl;
 
-
-    std_meta.egress_spec = egress_spec;
     BMELOG(packet_out, *packet);
     BMLOG_DEBUG_PKT(*packet, "Transmitting packet");
 

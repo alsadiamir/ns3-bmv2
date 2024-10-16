@@ -25,7 +25,7 @@
 // In microseconds: 1048576us ~ 1sec.
 // 10 windows = 10sec.
 // 2-standard deviation from mean is considered anomalous.
-#define BUCKET_SIZE 15
+#define BUCKET_SIZE 20
 #define WINDOW_SIZE 10
 #define SPLIT_SIZE 5
 #define STDEV_RANGE 2
@@ -314,7 +314,6 @@ control MyIngress(inout headers hdr,
     //SET COUNTER
     if (hdr.ipv4.isValid() && window_track.apply().hit) {
       dest_prefix_track.apply();
-      // d_subnet.write(0, hdr.ipv4.dstAddr);
       switch (mode) {
         ANOMALY: {
           bit<16> tmp;
@@ -391,15 +390,15 @@ control MyIngress(inout headers hdr,
               }            
             }
 
-            if(nval > peak){
-              //every time a bigger nval is detected, we reset the peak count
-              peak_nval.write(0, nval);
-              peak_packet_count.write(0, 0);
-            } else{
-              if(peak_pkt_count == 0){
-                peak_packet_count.write(0, atk_pkt_count);
-              }
-            }
+            // if(nval > peak){
+            //   //every time a bigger nval is detected, we reset the peak count
+            //   peak_nval.write(0, nval);
+            //   peak_packet_count.write(0, 0);
+            // } else{
+            //   if(peak_pkt_count == 0){
+            //     peak_packet_count.write(0, atk_pkt_count);
+            //   }
+            // }
 
             // Push bucket.
             bucket_idx = bucket_idx + 1;
@@ -414,9 +413,9 @@ control MyIngress(inout headers hdr,
             drop_bucket(bucket_idx, COUNTER_REFINE);
             next_bucket.write(0, bucket_idx);
             //update rotation
-            if(ticks<WINDOW_SIZE){
-              ticks_s.write(0, ticks + 1); //change mode each x ticks
-            }
+            // if(ticks<WINDOW_SIZE){
+            //   ticks_s.write(0, ticks + 1); //change mode each x ticks
+            // }
           }
 
           // Increment the packets bucket
@@ -519,16 +518,12 @@ control MyIngress(inout headers hdr,
                 reset_counters();
                 subnetStart = (bit<16>) 0x0a01 ++ (bit<8>) (meta.counter_value);
                 subnet = subnetStart ++ (bit<8>) 0;
-                d_subnet.write(0, subnet);   
-                // if(detected_subnet == 0){
-                //   set_debug(ENTROPY, meta.counter_value, subnet, 0, 0);
-                // }   
+                d_subnet.write(0, subnet);    
               } else if(stage == 2){
                 subnet = hdr.ipv4.dstAddr >> 8;
                 subnet = subnet << 8;
                 if(subnet == detected_subnet && detected_ip == 0){
                   d_ip.write(0, meta.counter_value);
-                  // set_debug(ENTROPY, meta.counter_value, subnet, meta.counter_value, 0);
                 }
               }
             } 

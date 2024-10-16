@@ -1,0 +1,5 @@
+register_write init_counter 0 1
+table_add MyIngress.cluster_to_prio MyIngress.set_prio_egress 4 => 0
+table_add MyIngress.cluster_to_prio MyIngress.set_prio_egress 3 => 1
+table_add MyIngress.cluster_to_prio MyIngress.set_prio_egress 2 => 2
+table_add MyIngress.cluster_to_prio MyIngress.set_prio_egress 1 => 3

@@ -219,3 +219,5 @@ network/utils/simple-net-device.h
 network/utils/sll-header.cc
 network/utils/sll-header.h
 
+**.p4i
+**.json

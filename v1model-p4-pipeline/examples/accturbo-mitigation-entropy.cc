@@ -18,7 +18,7 @@
 
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE ("Stat4Entropy2SwitchesTracingExample");
+NS_LOG_COMPONENT_DEFINE ("AccTurboEntropyTracingExample");
 
 
 void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces)
@@ -43,7 +43,7 @@ void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCo
         clientHelper.SetAttribute("MaxBytes", UintegerValue(250000)); // Max payload size in bytes
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
-        clientApp.Start(Seconds(2.0 + i));  // Start each flow with a slight delay
+        clientApp.Start(Seconds(2.0));  // Start each flow with a slight delay
         // StartBgSynApp(serverNodes.Get(i), clientNode, routerServerInterfaces, 2.0 + i);
     }
 }
@@ -62,10 +62,10 @@ void StartVolumetricFlow(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4In
 
         // Install TCP OnOff client on the client node (to act as TCP sender)
         OnOffHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
-        // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("7.5Kbps")));  // Data rate
-        clientHelper.SetAttribute("PacketSize", UintegerValue(256));  // Packet size
+        clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+        clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("15Kbps")));  // Data rate
+        clientHelper.SetAttribute("PacketSize", UintegerValue(1024));  // Packet size
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
         clientApp.Start(Seconds(5.0));  // Start each flow with a slight delay
@@ -81,26 +81,22 @@ void DropCallback(Ptr<const Packet> packet)
 
 int main(int argc, char *argv[])
 {
-    std::string outPcap = "trace-data/anomaly-entropy/withattack";
+    std::string outPcap = "trace-data/entropy/withattack";
     bool p4Enabled = false;
     bool attackEnabled = false;
-    bool deprioEnabled = false;
     
     CommandLine cmd;
     cmd.AddValue ("outPcap", "Simulation PCAP Destination folder", outPcap);
     cmd.AddValue ("p4Enabled", "Enable P4", p4Enabled);
-    cmd.AddValue ("deprioEnabled", "Enable Deprioritization, Default DROP", deprioEnabled);
     cmd.AddValue ("attackEnabled", "Enable Attack", attackEnabled);
     cmd.Parse (argc, argv);
 
-
-    LogComponentEnable ("Stat4Entropy2SwitchesTracingExample", LOG_LEVEL_INFO);
+    LogComponentEnable ("AccTurboEntropyTracingExample", LOG_LEVEL_INFO);
     Packet::EnablePrinting ();
     // Create nodes
     Ptr<Node> clientNode = CreateObject<Node> ();
     Ptr<Node> routerNode1 = CreateObject<Node> ();
     Ptr<Node> routerNode2 = CreateObject<Node> ();
-    Ptr<Node> routerNode3 = CreateObject<Node> ();
     NodeContainer serverNodes1, serverNodes2, serverNodes3, serverNodes4, serverNodes5, serverNodes6;
     serverNodes1.Create(6);  // 6 Servers
     serverNodes2.Create(6);  // 6 Servers
@@ -111,22 +107,22 @@ int main(int argc, char *argv[])
 
     // Create a CSMA network (Client -> Router -> Servers)
     NodeContainer routerToServers1, routerToServers2, routerToServers3, routerToServers4, routerToServers5, routerToServers6; // , attackerToServer3;
-    routerToServers1.Add(routerNode3);
+    routerToServers1.Add(routerNode2);
     routerToServers1.Add(serverNodes1);
-    routerToServers2.Add(routerNode3);
+    routerToServers2.Add(routerNode2);
     routerToServers2.Add(serverNodes2);
-    routerToServers3.Add(routerNode3);
+    routerToServers3.Add(routerNode2);
     routerToServers3.Add(serverNodes3);
-    routerToServers4.Add(routerNode3);
+    routerToServers4.Add(routerNode2);
     routerToServers4.Add(serverNodes4);
-    routerToServers5.Add(routerNode3);
+    routerToServers5.Add(routerNode2);
     routerToServers5.Add(serverNodes5);
-    routerToServers6.Add(routerNode3);
+    routerToServers6.Add(routerNode2);
     routerToServers6.Add(serverNodes6);
 
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("1Mbps"));
-    p2p.SetChannelAttribute("Delay", TimeValue(Seconds(20)));
+    p2p.SetDeviceAttribute("DataRate", StringValue("1.5Mbps"));
+    p2p.SetChannelAttribute("Delay", TimeValue(NanoSeconds(20)));
 
     // Setup CSMA attributes
     CsmaHelper csma;
@@ -136,7 +132,6 @@ int main(int argc, char *argv[])
     // Install CSMA devices on the nodes
     NetDeviceContainer clientRouterDevices = csma.Install(NodeContainer(clientNode, routerNode1));
     NetDeviceContainer router1Router2Devices = p2p.Install(NodeContainer(routerNode1, routerNode2));
-    NetDeviceContainer router2Router3Devices = p2p.Install(NodeContainer(routerNode2, routerNode3));
     NetDeviceContainer routerServerDevices1 = csma.Install(routerToServers1);
     NetDeviceContainer routerServerDevices2 = csma.Install(routerToServers2);
     NetDeviceContainer routerServerDevices3 = csma.Install(routerToServers3);
@@ -144,15 +139,13 @@ int main(int argc, char *argv[])
     NetDeviceContainer routerServerDevices5 = csma.Install(routerToServers5);
     NetDeviceContainer routerServerDevices6 = csma.Install(routerToServers6);
 
-    Ptr<NetDevice> r1Device = router1Router2Devices.Get (0);
-    Ptr<NetDevice> r2Device = router2Router3Devices.Get (0);
+    Ptr<NetDevice> rDevice = router1Router2Devices.Get (0);
 
     // Install Internet stack on all nodes
     InternetStackHelper internet;
     internet.Install(clientNode);
     internet.Install(routerNode1);
     internet.Install(routerNode2);
-    internet.Install(routerNode3);
     // internet.Install(attackerNode);
     internet.Install(serverNodes1);
     internet.Install(serverNodes2);
@@ -162,27 +155,16 @@ int main(int argc, char *argv[])
     internet.Install(serverNodes6);
 
     if (p4Enabled){
-        NS_LOG_INFO ("Configure Tracing.");
         Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
-        customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/detect_selfspec_p2p_2sw.json", "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/anomaly.txt");
-        Ptr<PointToPointNetDevice> p2pDevice = r1Device->GetObject<PointToPointNetDevice> ();
+        customQueue->SetAttribute("MaxQueueSize", UintegerValue(10000));
+        // customQueue->SetAttribute("MinThreshold", UintegerValue(50));
+        // customQueue->SetAttribute("MaxThreshold", UintegerValue(80));
+        customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/accturbo/accturbo.json", "src/traffic-control/examples/p4-src/accturbo/setup_prio.txt");
+        customQueue->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
+        Ptr<PointToPointNetDevice> p2pDevice = rDevice->GetObject<PointToPointNetDevice> ();
         p2pDevice->SetQueue(customQueue);
-
-        Ptr<V1ModelP4Queue> customQueue2 = CreateObject<V1ModelP4Queue> ();
-        std::string file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy.txt";
-        if(deprioEnabled){
-            NS_LOG_INFO ("Deprioritization Enabled.");
-            file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy_deprio.txt";
-            customQueue2->SetAttribute("MaxQueueSize", UintegerValue(1000));
-            customQueue2->SetAttribute("MinThreshold", UintegerValue(500));
-            customQueue2->SetAttribute("MaxThreshold", UintegerValue(800));
-            customQueue2->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
-        }    
-        customQueue2->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/detect_selfspec_p2p_2sw.json", file);
-        Ptr<PointToPointNetDevice> p2pDevice2 = r2Device->GetObject<PointToPointNetDevice> ();
-        p2pDevice2->SetQueue(customQueue2);
+        NS_LOG_INFO ("P4 Enabled.");
     }
-
     // Assign IP addresses
     // Client and router
     Ipv4AddressHelper address;
@@ -191,32 +173,29 @@ int main(int argc, char *argv[])
 
     address.SetBase("10.1.0.0", "255.255.255.0");  // Client and Router subnet
     Ipv4InterfaceContainer router1Router2Interfaces = address.Assign(router1Router2Devices);
-
-    address.SetBase("10.1.1.0", "255.255.255.0");
-    Ipv4InterfaceContainer router2Router3Interfaces = address.Assign(router2Router3Devices);
     
     // Router and servers
-    address.SetBase("10.1.2.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("10.1.1.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces1 = address.Assign(routerServerDevices1);
 
     // Router and servers
-    address.SetBase("10.1.3.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("10.1.2.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces2 = address.Assign(routerServerDevices2);
 
     // Router and servers
-    address.SetBase("10.1.4.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("10.1.3.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces3 = address.Assign(routerServerDevices3);
 
     // Router and servers
-    address.SetBase("10.1.5.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("10.1.4.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces4 = address.Assign(routerServerDevices4);
 
     // Router and servers
-    address.SetBase("10.1.6.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("10.1.5.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces5 = address.Assign(routerServerDevices5);
 
     // Router and servers
-    address.SetBase("10.1.7.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("10.1.6.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces6 = address.Assign(routerServerDevices6);
 
     Ptr<Ipv4> ipv4Router = routerNode1->GetObject<Ipv4>();
@@ -234,7 +213,7 @@ int main(int argc, char *argv[])
     StartFlows(serverNodes6, clientNode, routerServerInterfaces6);
 
     if(attackEnabled){
-        StartVolumetricFlow(serverNodes2, clientNode, routerServerInterfaces2); //to keep same IP for analysis
+        StartVolumetricFlow(serverNodes3, clientNode, routerServerInterfaces3);
         NS_LOG_INFO("Attack Enabled.");
     }
     csma.EnablePcapAll(outPcap+"/packets");  // Trace packets on server side

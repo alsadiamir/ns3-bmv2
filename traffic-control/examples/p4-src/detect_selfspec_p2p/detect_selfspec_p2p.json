@@ -38,12 +38,11 @@
         ["tmp_50", 32, false],
         ["tmp_51", 32, false],
         ["tmp_52", 48, false],
-        ["tmp_53", 16, false],
-        ["tmp_54", 32, false],
-        ["tmp_55", 8, false],
+        ["tmp_53", 32, false],
+        ["tmp_54", 8, false],
+        ["tmp_55", 32, false],
         ["tmp_56", 32, false],
-        ["tmp_57", 32, false],
-        ["tmp_58", 48, false],
+        ["tmp_57", 48, false],
         ["msb_x_0", 8, false],
         ["msb_z_0", 8, false],
         ["mantissa_mask_0", 32, false],
@@ -428,7 +427,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "detect_selfspec_p2p.p4",
-        "line" : 684,
+        "line" : 679,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
@@ -35232,7 +35231,7 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p322",
+      "name" : "detect_selfspec_p2p321",
       "id" : 51,
       "runtime_data" : [],
       "primitives" : [
@@ -35254,7 +35253,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 322,
+            "line" : 321,
             "column" : 10,
             "source_fragment" : "next_bucket.read(bucket_idx, 0)"
           }
@@ -35262,7 +35261,7 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p342",
+      "name" : "detect_selfspec_p2p341",
       "id" : 52,
       "runtime_data" : [],
       "primitives" : [
@@ -35280,7 +35279,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 342,
+            "line" : 341,
             "column" : 12,
             "source_fragment" : "bucket_idx = 0"
           }
@@ -35288,7 +35287,7 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p330",
+      "name" : "detect_selfspec_p2p329",
       "id" : 53,
       "runtime_data" : [],
       "primitives" : [
@@ -35339,7 +35338,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 330,
+            "line" : 329,
             "column" : 10,
             "source_fragment" : "bit<32> nval = (bit<32>)cval * meta.stats.N;"
           }
@@ -35362,7 +35361,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 331,
+            "line" : 330,
             "column" : 10,
             "source_fragment" : "last_bucket_stamp.read(last_stamp, 0)"
           }
@@ -35370,7 +35369,7 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p363",
+      "name" : "detect_selfspec_p2p362",
       "id" : 54,
       "runtime_data" : [],
       "primitives" : [
@@ -35431,7 +35430,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 363,
+            "line" : 362,
             "column" : 12,
             "source_fragment" : "tmpDistinctFlowsCurrent = tmpDistinctFlowsCurrent + tmpDistinctFlowsByte"
           }
@@ -35454,7 +35453,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 364,
+            "line" : 363,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(index, tmpDistinctFlowsCurrent)"
           }
@@ -35462,7 +35461,7 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p346",
+      "name" : "detect_selfspec_p2p345",
       "id" : 55,
       "runtime_data" : [],
       "primitives" : [
@@ -35503,7 +35502,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 346,
+            "line" : 345,
             "column" : 40,
             "source_fragment" : "(1 * 256) + meta.stats.Median"
           }
@@ -35526,7 +35525,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 346,
+            "line" : 345,
             "column" : 10,
             "source_fragment" : "stats_freq_internal.read(tmp, (1 * 256) + meta.stats.Median)"
           }
@@ -35553,7 +35552,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 349,
+            "line" : 348,
             "column" : 10,
             "source_fragment" : "hash(index, HashAlgorithm.crc32, 32w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 32w8)"
           }
@@ -35580,7 +35579,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 351,
+            "line" : 350,
             "column" : 10,
             "source_fragment" : "hash(hash_posix, HashAlgorithm.crc32, 32w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 32w256)"
           }
@@ -35603,7 +35602,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 353,
+            "line" : 352,
             "column" : 10,
             "source_fragment" : "distinctFlows.read(tmpDistinctFlowsCurrent, index)"
           }
@@ -35611,7 +35610,7 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p390",
+      "name" : "detect_selfspec_p2p389",
       "id" : 56,
       "runtime_data" : [],
       "primitives" : [
@@ -35652,7 +35651,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 390,
+            "line" : 389,
             "column" : 49,
             "source_fragment" : "(1 * 256) + meta.stats.Median"
           }
@@ -35675,7 +35674,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 390,
+            "line" : 389,
             "column" : 16,
             "source_fragment" : "stats_freq_internal.read(median, (1 * 256) + meta.stats.Median)"
           }
@@ -35683,7 +35682,7 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p369",
+      "name" : "detect_selfspec_p2p368",
       "id" : 57,
       "runtime_data" : [],
       "primitives" : [
@@ -35705,7 +35704,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 369,
+            "line" : 368,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(0,0)"
           }
@@ -35728,7 +35727,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 370,
+            "line" : 369,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(1,0)"
           }
@@ -35751,7 +35750,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 371,
+            "line" : 370,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(2,0)"
           }
@@ -35774,7 +35773,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 372,
+            "line" : 371,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(3,0)"
           }
@@ -35797,7 +35796,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 373,
+            "line" : 372,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(4,0)"
           }
@@ -35820,7 +35819,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 374,
+            "line" : 373,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(5,0)"
           }
@@ -35843,7 +35842,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 375,
+            "line" : 374,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(6,0)"
           }
@@ -35866,7 +35865,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 376,
+            "line" : 375,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(7,0)"
           }
@@ -35894,7 +35893,7 @@
                       },
                       "right" : {
                         "type" : "hexstr",
-                        "value" : "0xf"
+                        "value" : "0x14"
                       }
                     }
                   },
@@ -35910,7 +35909,7 @@
             "filename" : "detect_selfspec_p2p.p4",
             "line" : 297,
             "column" : 19,
-            "source_fragment" : "standard_metadata.ingress_global_timestamp >> 15"
+            "source_fragment" : "standard_metadata.ingress_global_timestamp >> 20"
           }
         },
         {
@@ -35931,7 +35930,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 379,
+            "line" : 378,
             "column" : 12,
             "source_fragment" : "last_bucket_stamp.write(0, bucket_stamp)"
           }
@@ -35939,91 +35938,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p396",
+      "name" : "detect_selfspec_p2p408",
       "id" : 58,
-      "runtime_data" : [],
-      "primitives" : [
-        {
-          "op" : "register_write",
-          "parameters" : [
-            {
-              "type" : "register_array",
-              "value" : "MyIngress.peak_nval"
-            },
-            {
-              "type" : "hexstr",
-              "value" : "0x00000000"
-            },
-            {
-              "type" : "field",
-              "value" : ["scalars", "nval_0"]
-            }
-          ],
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 396,
-            "column" : 14,
-            "source_fragment" : "peak_nval.write(0, nval)"
-          }
-        },
-        {
-          "op" : "register_write",
-          "parameters" : [
-            {
-              "type" : "register_array",
-              "value" : "MyIngress.peak_packet_count"
-            },
-            {
-              "type" : "hexstr",
-              "value" : "0x00000000"
-            },
-            {
-              "type" : "hexstr",
-              "value" : "0x0000"
-            }
-          ],
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 397,
-            "column" : 14,
-            "source_fragment" : "peak_packet_count.write(0, 0)"
-          }
-        }
-      ]
-    },
-    {
-      "name" : "detect_selfspec_p2p400",
-      "id" : 59,
-      "runtime_data" : [],
-      "primitives" : [
-        {
-          "op" : "register_write",
-          "parameters" : [
-            {
-              "type" : "register_array",
-              "value" : "MyIngress.peak_packet_count"
-            },
-            {
-              "type" : "hexstr",
-              "value" : "0x00000000"
-            },
-            {
-              "type" : "field",
-              "value" : ["scalars", "atk_pkt_count_0"]
-            }
-          ],
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 400,
-            "column" : 16,
-            "source_fragment" : "peak_packet_count.write(0, atk_pkt_count)"
-          }
-        }
-      ]
-    },
-    {
-      "name" : "detect_selfspec_p2p409",
-      "id" : 60,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36040,7 +35956,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 409,
+            "line" : 408,
             "column" : 14,
             "source_fragment" : "bucket_idx = 0"
           }
@@ -36048,8 +35964,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p405",
-      "id" : 61,
+      "name" : "detect_selfspec_p2p404",
+      "id" : 59,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36089,7 +36005,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 405,
+            "line" : 404,
             "column" : 12,
             "source_fragment" : "bucket_idx = bucket_idx + 1"
           }
@@ -36097,80 +36013,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p418",
-      "id" : 62,
-      "runtime_data" : [],
-      "primitives" : [
-        {
-          "op" : "assign",
-          "parameters" : [
-            {
-              "type" : "field",
-              "value" : ["scalars", "tmp_53"]
-            },
-            {
-              "type" : "expression",
-              "value" : {
-                "type" : "expression",
-                "value" : {
-                  "op" : "&",
-                  "left" : {
-                    "type" : "expression",
-                    "value" : {
-                      "op" : "+",
-                      "left" : {
-                        "type" : "field",
-                        "value" : ["scalars", "ticks_0"]
-                      },
-                      "right" : {
-                        "type" : "hexstr",
-                        "value" : "0x0001"
-                      }
-                    }
-                  },
-                  "right" : {
-                    "type" : "hexstr",
-                    "value" : "0xffff"
-                  }
-                }
-              }
-            }
-          ],
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 418,
-            "column" : 31,
-            "source_fragment" : "ticks + 1"
-          }
-        },
-        {
-          "op" : "register_write",
-          "parameters" : [
-            {
-              "type" : "register_array",
-              "value" : "MyIngress.ticks_s"
-            },
-            {
-              "type" : "hexstr",
-              "value" : "0x00000000"
-            },
-            {
-              "type" : "field",
-              "value" : ["scalars", "tmp_53"]
-            }
-          ],
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 418,
-            "column" : 14,
-            "source_fragment" : "ticks_s.write(0, ticks + 1)"
-          }
-        }
-      ]
-    },
-    {
-      "name" : "detect_selfspec_p2p415",
-      "id" : 63,
+      "name" : "detect_selfspec_p2p414",
+      "id" : 60,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36191,7 +36035,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 415,
+            "line" : 414,
             "column" : 12,
             "source_fragment" : "next_bucket.write(0, bucket_idx)"
           }
@@ -36199,8 +36043,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p434",
-      "id" : 64,
+      "name" : "detect_selfspec_p2p433",
+      "id" : 61,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36217,7 +36061,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 434,
+            "line" : 433,
             "column" : 12,
             "source_fragment" : "switch (stage"
           }
@@ -36225,8 +36069,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p446",
-      "id" : 65,
+      "name" : "detect_selfspec_p2p445",
+      "id" : 62,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36253,7 +36097,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 446,
+            "line" : 445,
             "column" : 16,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && hdr.tcp.flags == 16 && syn_track.apply().hit"
           }
@@ -36262,7 +36106,7 @@
     },
     {
       "name" : "act_1",
-      "id" : 66,
+      "id" : 63,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36292,7 +36136,7 @@
     },
     {
       "name" : "act_2",
-      "id" : 67,
+      "id" : 64,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36321,8 +36165,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p446_0",
-      "id" : 68,
+      "name" : "detect_selfspec_p2p445_0",
+      "id" : 65,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36356,7 +36200,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 446,
+            "line" : 445,
             "column" : 16,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && hdr.tcp.flags == 16 && syn_track.apply().hit"
           }
@@ -36364,8 +36208,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p458",
-      "id" : 69,
+      "name" : "detect_selfspec_p2p457",
+      "id" : 66,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36386,7 +36230,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 458,
+            "line" : 457,
             "column" : 18,
             "source_fragment" : "stage_s.write(0, 2)"
           }
@@ -36394,8 +36238,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p463",
-      "id" : 70,
+      "name" : "detect_selfspec_p2p462",
+      "id" : 67,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36403,7 +36247,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_54"]
+              "value" : ["scalars", "tmp_53"]
             },
             {
               "type" : "expression",
@@ -36495,7 +36339,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 462,
+            "line" : 461,
             "column" : 27,
             "source_fragment" : "subnetStart ++ (bit<8>) 0"
           }
@@ -36513,12 +36357,12 @@
             },
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_54"]
+              "value" : ["scalars", "tmp_53"]
             }
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 463,
+            "line" : 462,
             "column" : 18,
             "source_fragment" : "d_subnet.write(0, subnet)"
           }
@@ -36526,8 +36370,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p471",
-      "id" : 71,
+      "name" : "detect_selfspec_p2p470",
+      "id" : 68,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36548,7 +36392,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 471,
+            "line" : 470,
             "column" : 20,
             "source_fragment" : "d_ip.write(0, meta.counter_value)"
           }
@@ -36556,8 +36400,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p484",
-      "id" : 72,
+      "name" : "detect_selfspec_p2p483",
+      "id" : 69,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36565,7 +36409,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_55"]
+              "value" : ["scalars", "tmp_54"]
             },
             {
               "type" : "expression",
@@ -36607,7 +36451,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 484,
+            "line" : 483,
             "column" : 35,
             "source_fragment" : "hdr.ipv4.dstAddr[23:16]"
           }
@@ -36625,12 +36469,12 @@
             },
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_55"]
+              "value" : ["scalars", "tmp_54"]
             }
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 484,
+            "line" : 483,
             "column" : 10,
             "source_fragment" : "counter_value_s.write(0, hdr.ipv4.dstAddr[23:16])"
           }
@@ -36638,8 +36482,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p494",
-      "id" : 73,
+      "name" : "detect_selfspec_p2p493",
+      "id" : 70,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36656,7 +36500,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 494,
+            "line" : 493,
             "column" : 10,
             "source_fragment" : "switch (stage"
           }
@@ -36664,8 +36508,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p507",
-      "id" : 74,
+      "name" : "detect_selfspec_p2p506",
+      "id" : 71,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36692,7 +36536,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 507,
+            "line" : 506,
             "column" : 14,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && entropy_track.apply().hit"
           }
@@ -36701,7 +36545,7 @@
     },
     {
       "name" : "act_3",
-      "id" : 75,
+      "id" : 72,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36731,7 +36575,7 @@
     },
     {
       "name" : "act_4",
-      "id" : 76,
+      "id" : 73,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36760,8 +36604,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p507_0",
-      "id" : 77,
+      "name" : "detect_selfspec_p2p506_0",
+      "id" : 74,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36795,7 +36639,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 507,
+            "line" : 506,
             "column" : 14,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && entropy_track.apply().hit"
           }
@@ -36803,8 +36647,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p517",
-      "id" : 78,
+      "name" : "detect_selfspec_p2p516",
+      "id" : 75,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36825,7 +36669,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 517,
+            "line" : 516,
             "column" : 16,
             "source_fragment" : "stage_s.write(0, 2)"
           }
@@ -36833,8 +36677,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p522",
-      "id" : 79,
+      "name" : "detect_selfspec_p2p521",
+      "id" : 76,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36842,7 +36686,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_56"]
+              "value" : ["scalars", "tmp_55"]
             },
             {
               "type" : "expression",
@@ -36934,7 +36778,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 521,
+            "line" : 520,
             "column" : 25,
             "source_fragment" : "subnetStart ++ (bit<8>) 0"
           }
@@ -36952,12 +36796,12 @@
             },
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_56"]
+              "value" : ["scalars", "tmp_55"]
             }
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 522,
+            "line" : 521,
             "column" : 16,
             "source_fragment" : "d_subnet.write(0, subnet)"
           }
@@ -36965,8 +36809,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p530",
-      "id" : 80,
+      "name" : "detect_selfspec_p2p526",
+      "id" : 77,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -36987,7 +36831,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 530,
+            "line" : 526,
             "column" : 18,
             "source_fragment" : "d_ip.write(0, meta.counter_value)"
           }
@@ -36995,8 +36839,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p560",
-      "id" : 81,
+      "name" : "detect_selfspec_p2p555",
+      "id" : 78,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37017,7 +36861,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 560,
+            "line" : 555,
             "column" : 14,
             "source_fragment" : "isLfa.write(0,1)"
           }
@@ -37040,7 +36884,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 561,
+            "line" : 556,
             "column" : 14,
             "source_fragment" : "median_s.write(1, newmedian)"
           }
@@ -37048,8 +36892,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p555",
-      "id" : 82,
+      "name" : "detect_selfspec_p2p550",
+      "id" : 79,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37057,7 +36901,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_57"]
+              "value" : ["scalars", "tmp_56"]
             },
             {
               "type" : "expression",
@@ -37089,7 +36933,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 555,
+            "line" : 550,
             "column" : 48,
             "source_fragment" : "(1 * 256) + meta.stats.Median"
           }
@@ -37107,12 +36951,12 @@
             },
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_57"]
+              "value" : ["scalars", "tmp_56"]
             }
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 555,
+            "line" : 550,
             "column" : 12,
             "source_fragment" : "stats_freq_internal.read(newmedian, (1 * 256) + meta.stats.Median)"
           }
@@ -37120,8 +36964,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p592",
-      "id" : 83,
+      "name" : "detect_selfspec_p2p587",
+      "id" : 80,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37191,7 +37035,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 592,
+            "line" : 587,
             "column" : 14,
             "source_fragment" : "tmpDistinctFlowsCurrent = tmpDistinctFlowsCurrent + tmpDistinctFlowsByte"
           }
@@ -37214,7 +37058,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 593,
+            "line" : 588,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(meta.index, tmpDistinctFlowsCurrent)"
           }
@@ -37222,8 +37066,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p582",
-      "id" : 84,
+      "name" : "detect_selfspec_p2p577",
+      "id" : 81,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37244,7 +37088,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 582,
+            "line" : 577,
             "column" : 12,
             "source_fragment" : "distinctFlows.read(tmpDistinctFlowsCurrent, meta.index)"
           }
@@ -37252,8 +37096,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p614",
-      "id" : 85,
+      "name" : "detect_selfspec_p2p609",
+      "id" : 82,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37270,7 +37114,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 614,
+            "line" : 609,
             "column" : 16,
             "source_fragment" : "bucket_idx = 0"
           }
@@ -37278,8 +37122,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p597",
-      "id" : 86,
+      "name" : "detect_selfspec_p2p592",
+      "id" : 83,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37300,7 +37144,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 597,
+            "line" : 592,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(0,0)"
           }
@@ -37323,7 +37167,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 598,
+            "line" : 593,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(1,0)"
           }
@@ -37346,7 +37190,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 599,
+            "line" : 594,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(2,0)"
           }
@@ -37369,7 +37213,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 600,
+            "line" : 595,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(3,0)"
           }
@@ -37392,7 +37236,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 601,
+            "line" : 596,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(4,0)"
           }
@@ -37415,7 +37259,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 602,
+            "line" : 597,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(5,0)"
           }
@@ -37438,7 +37282,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 603,
+            "line" : 598,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(6,0)"
           }
@@ -37461,7 +37305,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 604,
+            "line" : 599,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(7,0)"
           }
@@ -37471,7 +37315,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_58"]
+              "value" : ["scalars", "tmp_57"]
             },
             {
               "type" : "expression",
@@ -37489,7 +37333,7 @@
                       },
                       "right" : {
                         "type" : "hexstr",
-                        "value" : "0xf"
+                        "value" : "0x14"
                       }
                     }
                   },
@@ -37505,7 +37349,7 @@
             "filename" : "detect_selfspec_p2p.p4",
             "line" : 297,
             "column" : 19,
-            "source_fragment" : "standard_metadata.ingress_global_timestamp >> 15"
+            "source_fragment" : "standard_metadata.ingress_global_timestamp >> 20"
           }
         },
         {
@@ -37521,12 +37365,12 @@
             },
             {
               "type" : "field",
-              "value" : ["scalars", "tmp_58"]
+              "value" : ["scalars", "tmp_57"]
             }
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 607,
+            "line" : 602,
             "column" : 14,
             "source_fragment" : "last_bucket_stamp.write(0, bucket_stamp)"
           }
@@ -37568,7 +37412,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 610,
+            "line" : 605,
             "column" : 14,
             "source_fragment" : "bucket_idx = bucket_idx + 1"
           }
@@ -37576,8 +37420,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p619",
-      "id" : 87,
+      "name" : "detect_selfspec_p2p614",
+      "id" : 84,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37598,7 +37442,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 619,
+            "line" : 614,
             "column" : 14,
             "source_fragment" : "next_bucket.write(0, bucket_idx)"
           }
@@ -37606,8 +37450,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p549",
-      "id" : 88,
+      "name" : "detect_selfspec_p2p544",
+      "id" : 85,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37628,7 +37472,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 549,
+            "line" : 544,
             "column" : 10,
             "source_fragment" : "next_bucket.read(bucket_idx, 0)"
           }
@@ -37651,7 +37495,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 550,
+            "line" : 545,
             "column" : 10,
             "source_fragment" : "last_bucket_stamp.read(last_stamp, 0)"
           }
@@ -37674,7 +37518,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 551,
+            "line" : 546,
             "column" : 10,
             "source_fragment" : "median_s.read(bigmedian, 1)"
           }
@@ -37682,8 +37526,8 @@
       ]
     },
     {
-      "name" : "detect_selfspec_p2p318",
-      "id" : 89,
+      "name" : "detect_selfspec_p2p317",
+      "id" : 86,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -37700,7 +37544,7 @@
           ],
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 318,
+            "line" : 317,
             "column" : 6,
             "source_fragment" : "switch (mode"
           }
@@ -37915,10 +37759,10 @@
           "direct_meters" : null,
           "action_ids" : [28, 3],
           "actions" : ["MyIngress.track", "NoAction"],
-          "base_default_next" : "tbl_detect_selfspec_p2p318",
+          "base_default_next" : "tbl_detect_selfspec_p2p317",
           "next_tables" : {
-            "MyIngress.track" : "tbl_detect_selfspec_p2p318",
-            "NoAction" : "tbl_detect_selfspec_p2p318"
+            "MyIngress.track" : "tbl_detect_selfspec_p2p317",
+            "NoAction" : "tbl_detect_selfspec_p2p317"
           },
           "default_entry" : {
             "action_id" : 3,
@@ -37928,11 +37772,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p318",
+          "name" : "tbl_detect_selfspec_p2p317",
           "id" : 7,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 318,
+            "line" : 317,
             "column" : 6,
             "source_fragment" : "switch"
           },
@@ -37943,14 +37787,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [89],
-          "actions" : ["detect_selfspec_p2p318"],
+          "action_ids" : [86],
+          "actions" : ["detect_selfspec_p2p317"],
           "base_default_next" : "switch_2_table",
           "next_tables" : {
-            "detect_selfspec_p2p318" : "switch_2_table"
+            "detect_selfspec_p2p317" : "switch_2_table"
           },
           "default_entry" : {
-            "action_id" : 89,
+            "action_id" : 86,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -37961,7 +37805,7 @@
           "id" : 8,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 318,
+            "line" : 317,
             "column" : 6,
             "source_fragment" : "switch"
           },
@@ -37983,10 +37827,10 @@
           "base_default_next" : null,
           "next_tables" : {
             "switch_2_case_3" : null,
-            "switch_2_case" : "tbl_detect_selfspec_p2p322",
-            "switch_2_case_0" : "node_44",
-            "switch_2_case_1" : "tbl_detect_selfspec_p2p484",
-            "switch_2_case_2" : "tbl_detect_selfspec_p2p549"
+            "switch_2_case" : "tbl_detect_selfspec_p2p321",
+            "switch_2_case_0" : "node_38",
+            "switch_2_case_1" : "tbl_detect_selfspec_p2p483",
+            "switch_2_case_2" : "tbl_detect_selfspec_p2p544"
           },
           "default_entry" : {
             "action_id" : 45,
@@ -37998,7 +37842,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 319,
+                "line" : 318,
                 "column" : 8,
                 "source_fragment" : "0: { ..."
               },
@@ -38017,7 +37861,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 425,
+                "line" : 424,
                 "column" : 8,
                 "source_fragment" : "2: { ..."
               },
@@ -38036,7 +37880,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 478,
+                "line" : 477,
                 "column" : 8,
                 "source_fragment" : "3: { ..."
               },
@@ -38055,7 +37899,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 537,
+                "line" : 532,
                 "column" : 8,
                 "source_fragment" : "1: { ..."
               },
@@ -38074,11 +37918,11 @@
           ]
         },
         {
-          "name" : "tbl_detect_selfspec_p2p322",
+          "name" : "tbl_detect_selfspec_p2p321",
           "id" : 9,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 322,
+            "line" : 321,
             "column" : 10,
             "source_fragment" : "next_bucket.read(bucket_idx, 0)"
           },
@@ -38090,10 +37934,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [51],
-          "actions" : ["detect_selfspec_p2p322"],
+          "actions" : ["detect_selfspec_p2p321"],
           "base_default_next" : "tbl_read_bucket",
           "next_tables" : {
-            "detect_selfspec_p2p322" : "tbl_read_bucket"
+            "detect_selfspec_p2p321" : "tbl_read_bucket"
           },
           "default_entry" : {
             "action_id" : 51,
@@ -38107,7 +37951,7 @@
           "id" : 10,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 326,
+            "line" : 325,
             "column" : 10,
             "source_fragment" : "read_bucket(cval, bucket_idx, 0)"
           },
@@ -38136,7 +37980,7 @@
           "id" : 11,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 327,
+            "line" : 326,
             "column" : 10,
             "source_fragment" : "stats_get_data(meta.stats, 0)"
           },
@@ -38149,9 +37993,9 @@
           "direct_meters" : null,
           "action_ids" : [5],
           "actions" : ["stats_get_data"],
-          "base_default_next" : "tbl_detect_selfspec_p2p330",
+          "base_default_next" : "tbl_detect_selfspec_p2p329",
           "next_tables" : {
-            "stats_get_data" : "tbl_detect_selfspec_p2p330"
+            "stats_get_data" : "tbl_detect_selfspec_p2p329"
           },
           "default_entry" : {
             "action_id" : 5,
@@ -38161,11 +38005,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p330",
+          "name" : "tbl_detect_selfspec_p2p329",
           "id" : 12,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 330,
+            "line" : 329,
             "column" : 10,
             "source_fragment" : "bit<32> nval = (bit<32>)cval * meta.stats.N; ..."
           },
@@ -38177,10 +38021,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [53],
-          "actions" : ["detect_selfspec_p2p330"],
+          "actions" : ["detect_selfspec_p2p329"],
           "base_default_next" : "node_17",
           "next_tables" : {
-            "detect_selfspec_p2p330" : "node_17"
+            "detect_selfspec_p2p329" : "node_17"
           },
           "default_entry" : {
             "action_id" : 53,
@@ -38190,11 +38034,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p342",
+          "name" : "tbl_detect_selfspec_p2p341",
           "id" : 13,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 342,
+            "line" : 341,
             "column" : 23,
             "source_fragment" : "="
           },
@@ -38206,10 +38050,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [52],
-          "actions" : ["detect_selfspec_p2p342"],
+          "actions" : ["detect_selfspec_p2p341"],
           "base_default_next" : "tbl_stats_get_data_0",
           "next_tables" : {
-            "detect_selfspec_p2p342" : "tbl_stats_get_data_0"
+            "detect_selfspec_p2p341" : "tbl_stats_get_data_0"
           },
           "default_entry" : {
             "action_id" : 52,
@@ -38223,7 +38067,7 @@
           "id" : 14,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 345,
+            "line" : 344,
             "column" : 10,
             "source_fragment" : "stats_get_data(meta.stats, 1)"
           },
@@ -38236,9 +38080,9 @@
           "direct_meters" : null,
           "action_ids" : [6],
           "actions" : ["stats_get_data"],
-          "base_default_next" : "tbl_detect_selfspec_p2p346",
+          "base_default_next" : "tbl_detect_selfspec_p2p345",
           "next_tables" : {
-            "stats_get_data" : "tbl_detect_selfspec_p2p346"
+            "stats_get_data" : "tbl_detect_selfspec_p2p345"
           },
           "default_entry" : {
             "action_id" : 6,
@@ -38248,11 +38092,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p346",
+          "name" : "tbl_detect_selfspec_p2p345",
           "id" : 15,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 346,
+            "line" : 345,
             "column" : 10,
             "source_fragment" : "stats_freq_internal.read(tmp, (1 * 256) + meta.stats.Median); ..."
           },
@@ -38264,10 +38108,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [55],
-          "actions" : ["detect_selfspec_p2p346"],
+          "actions" : ["detect_selfspec_p2p345"],
           "base_default_next" : "node_21",
           "next_tables" : {
-            "detect_selfspec_p2p346" : "node_21"
+            "detect_selfspec_p2p345" : "node_21"
           },
           "default_entry" : {
             "action_id" : 55,
@@ -38281,7 +38125,7 @@
           "id" : 16,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 358,
+            "line" : 357,
             "column" : 12,
             "source_fragment" : "median_90_tick(1)"
           },
@@ -38310,7 +38154,7 @@
           "id" : 17,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 359,
+            "line" : 358,
             "column" : 12,
             "source_fragment" : "stats_push_freq(tmp, bucket_idx, 1)"
           },
@@ -38323,9 +38167,9 @@
           "direct_meters" : null,
           "action_ids" : [11],
           "actions" : ["stats_push_freq"],
-          "base_default_next" : "tbl_detect_selfspec_p2p363",
+          "base_default_next" : "tbl_detect_selfspec_p2p362",
           "next_tables" : {
-            "stats_push_freq" : "tbl_detect_selfspec_p2p363"
+            "stats_push_freq" : "tbl_detect_selfspec_p2p362"
           },
           "default_entry" : {
             "action_id" : 11,
@@ -38335,11 +38179,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p363",
+          "name" : "tbl_detect_selfspec_p2p362",
           "id" : 18,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 363,
+            "line" : 362,
             "column" : 36,
             "source_fragment" : "= tmpDistinctFlowsCurrent + tmpDistinctFlowsByte; ..."
           },
@@ -38351,10 +38195,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [54],
-          "actions" : ["detect_selfspec_p2p363"],
+          "actions" : ["detect_selfspec_p2p362"],
           "base_default_next" : "node_25",
           "next_tables" : {
-            "detect_selfspec_p2p363" : "node_25"
+            "detect_selfspec_p2p362" : "node_25"
           },
           "default_entry" : {
             "action_id" : 54,
@@ -38364,11 +38208,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p369",
+          "name" : "tbl_detect_selfspec_p2p368",
           "id" : 19,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 369,
+            "line" : 368,
             "column" : 12,
             "source_fragment" : "distinctFlows.write(0,0); ..."
           },
@@ -38380,10 +38224,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [57],
-          "actions" : ["detect_selfspec_p2p369"],
+          "actions" : ["detect_selfspec_p2p368"],
           "base_default_next" : "node_27",
           "next_tables" : {
-            "detect_selfspec_p2p369" : "node_27"
+            "detect_selfspec_p2p368" : "node_27"
           },
           "default_entry" : {
             "action_id" : 57,
@@ -38397,7 +38241,7 @@
           "id" : 20,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 386,
+            "line" : 385,
             "column" : 14,
             "source_fragment" : "drop_bucket(bucket_idx, 0)"
           },
@@ -38422,11 +38266,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p390",
+          "name" : "tbl_detect_selfspec_p2p389",
           "id" : 21,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 390,
+            "line" : 389,
             "column" : 16,
             "source_fragment" : "stats_freq_internal.read(median, (1 * 256) + meta.stats.Median)"
           },
@@ -38438,10 +38282,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [56],
-          "actions" : ["detect_selfspec_p2p390"],
-          "base_default_next" : "node_31",
+          "actions" : ["detect_selfspec_p2p389"],
+          "base_default_next" : "tbl_detect_selfspec_p2p404",
           "next_tables" : {
-            "detect_selfspec_p2p390" : "node_31"
+            "detect_selfspec_p2p389" : "tbl_detect_selfspec_p2p404"
           },
           "default_entry" : {
             "action_id" : 56,
@@ -38451,69 +38295,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p396",
+          "name" : "tbl_detect_selfspec_p2p404",
           "id" : 22,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 396,
-            "column" : 14,
-            "source_fragment" : "peak_nval.write(0, nval); ..."
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [58],
-          "actions" : ["detect_selfspec_p2p396"],
-          "base_default_next" : "tbl_detect_selfspec_p2p405",
-          "next_tables" : {
-            "detect_selfspec_p2p396" : "tbl_detect_selfspec_p2p405"
-          },
-          "default_entry" : {
-            "action_id" : 58,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
-        },
-        {
-          "name" : "tbl_detect_selfspec_p2p400",
-          "id" : 23,
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 400,
-            "column" : 16,
-            "source_fragment" : "peak_packet_count.write(0, atk_pkt_count)"
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [59],
-          "actions" : ["detect_selfspec_p2p400"],
-          "base_default_next" : "tbl_detect_selfspec_p2p405",
-          "next_tables" : {
-            "detect_selfspec_p2p400" : "tbl_detect_selfspec_p2p405"
-          },
-          "default_entry" : {
-            "action_id" : 59,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
-        },
-        {
-          "name" : "tbl_detect_selfspec_p2p405",
-          "id" : 24,
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 405,
+            "line" : 404,
             "column" : 23,
             "source_fragment" : "="
           },
@@ -38524,25 +38310,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [61],
-          "actions" : ["detect_selfspec_p2p405"],
-          "base_default_next" : "node_36",
+          "action_ids" : [59],
+          "actions" : ["detect_selfspec_p2p404"],
+          "base_default_next" : "node_32",
           "next_tables" : {
-            "detect_selfspec_p2p405" : "node_36"
+            "detect_selfspec_p2p404" : "node_32"
           },
           "default_entry" : {
-            "action_id" : 61,
+            "action_id" : 59,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p409",
-          "id" : 25,
+          "name" : "tbl_detect_selfspec_p2p408",
+          "id" : 23,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 409,
+            "line" : 408,
             "column" : 25,
             "source_fragment" : "="
           },
@@ -38553,14 +38339,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [60],
-          "actions" : ["detect_selfspec_p2p409"],
+          "action_ids" : [58],
+          "actions" : ["detect_selfspec_p2p408"],
           "base_default_next" : "tbl_drop_bucket_0",
           "next_tables" : {
-            "detect_selfspec_p2p409" : "tbl_drop_bucket_0"
+            "detect_selfspec_p2p408" : "tbl_drop_bucket_0"
           },
           "default_entry" : {
-            "action_id" : 60,
+            "action_id" : 58,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -38568,10 +38354,10 @@
         },
         {
           "name" : "tbl_drop_bucket_0",
-          "id" : 26,
+          "id" : 24,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 413,
+            "line" : 412,
             "column" : 12,
             "source_fragment" : "drop_bucket(bucket_idx, 0)"
           },
@@ -38597,10 +38383,10 @@
         },
         {
           "name" : "tbl_drop_bucket_1",
-          "id" : 27,
+          "id" : 25,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 414,
+            "line" : 413,
             "column" : 12,
             "source_fragment" : "drop_bucket(bucket_idx, 1)"
           },
@@ -38613,9 +38399,9 @@
           "direct_meters" : null,
           "action_ids" : [18],
           "actions" : ["drop_bucket"],
-          "base_default_next" : "tbl_detect_selfspec_p2p415",
+          "base_default_next" : "tbl_detect_selfspec_p2p414",
           "next_tables" : {
-            "drop_bucket" : "tbl_detect_selfspec_p2p415"
+            "drop_bucket" : "tbl_detect_selfspec_p2p414"
           },
           "default_entry" : {
             "action_id" : 18,
@@ -38625,11 +38411,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p415",
-          "id" : 28,
+          "name" : "tbl_detect_selfspec_p2p414",
+          "id" : 26,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 415,
+            "line" : 414,
             "column" : 12,
             "source_fragment" : "next_bucket.write(0, bucket_idx)"
           },
@@ -38640,43 +38426,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [63],
-          "actions" : ["detect_selfspec_p2p415"],
-          "base_default_next" : "node_41",
-          "next_tables" : {
-            "detect_selfspec_p2p415" : "node_41"
-          },
-          "default_entry" : {
-            "action_id" : 63,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
-        },
-        {
-          "name" : "tbl_detect_selfspec_p2p418",
-          "id" : 29,
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 418,
-            "column" : 14,
-            "source_fragment" : "ticks_s.write(0, ticks + 1)"
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [62],
-          "actions" : ["detect_selfspec_p2p418"],
+          "action_ids" : [60],
+          "actions" : ["detect_selfspec_p2p414"],
           "base_default_next" : "tbl_stats_push_freq_0",
           "next_tables" : {
-            "detect_selfspec_p2p418" : "tbl_stats_push_freq_0"
+            "detect_selfspec_p2p414" : "tbl_stats_push_freq_0"
           },
           "default_entry" : {
-            "action_id" : 62,
+            "action_id" : 60,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -38684,10 +38441,10 @@
         },
         {
           "name" : "tbl_stats_push_freq_0",
-          "id" : 30,
+          "id" : 27,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 423,
+            "line" : 422,
             "column" : 10,
             "source_fragment" : "stats_push_freq(tmp, bucket_idx, 0)"
           },
@@ -38713,10 +38470,10 @@
         },
         {
           "name" : "tbl_drop",
-          "id" : 31,
+          "id" : 28,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 432,
+            "line" : 431,
             "column" : 14,
             "source_fragment" : "drop()"
           },
@@ -38729,9 +38486,9 @@
           "direct_meters" : null,
           "action_ids" : [23],
           "actions" : ["MyIngress.drop"],
-          "base_default_next" : "tbl_detect_selfspec_p2p434",
+          "base_default_next" : "tbl_detect_selfspec_p2p433",
           "next_tables" : {
-            "MyIngress.drop" : "tbl_detect_selfspec_p2p434"
+            "MyIngress.drop" : "tbl_detect_selfspec_p2p433"
           },
           "default_entry" : {
             "action_id" : 23,
@@ -38741,11 +38498,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p434",
-          "id" : 32,
+          "name" : "tbl_detect_selfspec_p2p433",
+          "id" : 29,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 434,
+            "line" : 433,
             "column" : 12,
             "source_fragment" : "switch"
           },
@@ -38756,14 +38513,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [64],
-          "actions" : ["detect_selfspec_p2p434"],
+          "action_ids" : [61],
+          "actions" : ["detect_selfspec_p2p433"],
           "base_default_next" : "switch_0_table",
           "next_tables" : {
-            "detect_selfspec_p2p434" : "switch_0_table"
+            "detect_selfspec_p2p433" : "switch_0_table"
           },
           "default_entry" : {
-            "action_id" : 64,
+            "action_id" : 61,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -38771,10 +38528,10 @@
         },
         {
           "name" : "switch_0_table",
-          "id" : 33,
+          "id" : 30,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 434,
+            "line" : 433,
             "column" : 12,
             "source_fragment" : "switch"
           },
@@ -38793,11 +38550,11 @@
           "direct_meters" : null,
           "action_ids" : [35, 36, 37],
           "actions" : ["switch_0_case", "switch_0_case_0", "switch_0_case_1"],
-          "base_default_next" : "node_50",
+          "base_default_next" : "node_44",
           "next_tables" : {
             "switch_0_case" : "tbl_set_tracked_subnet",
             "switch_0_case_0" : "tbl_set_tracked_ip",
-            "switch_0_case_1" : "node_50"
+            "switch_0_case_1" : "node_44"
           },
           "default_entry" : {
             "action_id" : 37,
@@ -38809,7 +38566,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 435,
+                "line" : 434,
                 "column" : 14,
                 "source_fragment" : "1: { //track subnets - 1 ..."
               },
@@ -38828,7 +38585,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 438,
+                "line" : 437,
                 "column" : 14,
                 "source_fragment" : "2: { //track ips - 2 ..."
               },
@@ -38848,10 +38605,10 @@
         },
         {
           "name" : "tbl_set_tracked_subnet",
-          "id" : 34,
+          "id" : 31,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 436,
+            "line" : 435,
             "column" : 16,
             "source_fragment" : "set_tracked_subnet()"
           },
@@ -38864,9 +38621,9 @@
           "direct_meters" : null,
           "action_ids" : [29],
           "actions" : ["MyIngress.set_tracked_subnet"],
-          "base_default_next" : "node_50",
+          "base_default_next" : "node_44",
           "next_tables" : {
-            "MyIngress.set_tracked_subnet" : "node_50"
+            "MyIngress.set_tracked_subnet" : "node_44"
           },
           "default_entry" : {
             "action_id" : 29,
@@ -38877,10 +38634,10 @@
         },
         {
           "name" : "tbl_set_tracked_ip",
-          "id" : 35,
+          "id" : 32,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 439,
+            "line" : 438,
             "column" : 16,
             "source_fragment" : "set_tracked_ip()"
           },
@@ -38893,9 +38650,9 @@
           "direct_meters" : null,
           "action_ids" : [31],
           "actions" : ["MyIngress.set_tracked_ip"],
-          "base_default_next" : "node_50",
+          "base_default_next" : "node_44",
           "next_tables" : {
-            "MyIngress.set_tracked_ip" : "node_50"
+            "MyIngress.set_tracked_ip" : "node_44"
           },
           "default_entry" : {
             "action_id" : 31,
@@ -38905,11 +38662,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p446",
-          "id" : 36,
+          "name" : "tbl_detect_selfspec_p2p445",
+          "id" : 33,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 446,
+            "line" : 445,
             "column" : 16,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && hdr.tcp.flags == 16 && syn_track.apply().hit"
           },
@@ -38920,14 +38677,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [65],
-          "actions" : ["detect_selfspec_p2p446"],
-          "base_default_next" : "node_56",
+          "action_ids" : [62],
+          "actions" : ["detect_selfspec_p2p445"],
+          "base_default_next" : "node_50",
           "next_tables" : {
-            "detect_selfspec_p2p446" : "node_56"
+            "detect_selfspec_p2p445" : "node_50"
           },
           "default_entry" : {
-            "action_id" : 65,
+            "action_id" : 62,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -38935,7 +38692,7 @@
         },
         {
           "name" : "MyIngress.syn_track",
-          "id" : 37,
+          "id" : 34,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
             "line" : 198,
@@ -38972,7 +38729,7 @@
         },
         {
           "name" : "tbl_act_1",
-          "id" : 38,
+          "id" : 35,
           "key" : [],
           "match_type" : "exact",
           "type" : "simple",
@@ -38980,14 +38737,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [66],
+          "action_ids" : [63],
           "actions" : ["act_1"],
-          "base_default_next" : "tbl_detect_selfspec_p2p446_0",
+          "base_default_next" : "tbl_detect_selfspec_p2p445_0",
           "next_tables" : {
-            "act_1" : "tbl_detect_selfspec_p2p446_0"
+            "act_1" : "tbl_detect_selfspec_p2p445_0"
           },
           "default_entry" : {
-            "action_id" : 66,
+            "action_id" : 63,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -38995,7 +38752,7 @@
         },
         {
           "name" : "tbl_act_2",
-          "id" : 39,
+          "id" : 36,
           "key" : [],
           "match_type" : "exact",
           "type" : "simple",
@@ -39003,25 +38760,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [67],
+          "action_ids" : [64],
           "actions" : ["act_2"],
-          "base_default_next" : "tbl_detect_selfspec_p2p446_0",
+          "base_default_next" : "tbl_detect_selfspec_p2p445_0",
           "next_tables" : {
-            "act_2" : "tbl_detect_selfspec_p2p446_0"
+            "act_2" : "tbl_detect_selfspec_p2p445_0"
           },
           "default_entry" : {
-            "action_id" : 67,
+            "action_id" : 64,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p446_0",
-          "id" : 40,
+          "name" : "tbl_detect_selfspec_p2p445_0",
+          "id" : 37,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 446,
+            "line" : 445,
             "column" : 16,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && hdr.tcp.flags == 16 && syn_track.apply().hit"
           },
@@ -39032,14 +38789,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [68],
-          "actions" : ["detect_selfspec_p2p446_0"],
-          "base_default_next" : "node_56",
+          "action_ids" : [65],
+          "actions" : ["detect_selfspec_p2p445_0"],
+          "base_default_next" : "node_50",
           "next_tables" : {
-            "detect_selfspec_p2p446_0" : "node_56"
+            "detect_selfspec_p2p445_0" : "node_50"
           },
           "default_entry" : {
-            "action_id" : 68,
+            "action_id" : 65,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39047,10 +38804,10 @@
         },
         {
           "name" : "tbl_stats_push_freq_1",
-          "id" : 41,
+          "id" : 38,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 448,
+            "line" : 447,
             "column" : 14,
             "source_fragment" : "stats_push_freq(tmp, meta.counter_value, 1)"
           },
@@ -39076,10 +38833,10 @@
         },
         {
           "name" : "tbl_stats_get_data_1",
-          "id" : 42,
+          "id" : 39,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 449,
+            "line" : 448,
             "column" : 14,
             "source_fragment" : "stats_get_data(meta.stats, 1)"
           },
@@ -39092,9 +38849,9 @@
           "direct_meters" : null,
           "action_ids" : [7],
           "actions" : ["stats_get_data"],
-          "base_default_next" : "node_59",
+          "base_default_next" : "node_53",
           "next_tables" : {
-            "stats_get_data" : "node_59"
+            "stats_get_data" : "node_53"
           },
           "default_entry" : {
             "action_id" : 7,
@@ -39104,11 +38861,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p458",
-          "id" : 43,
+          "name" : "tbl_detect_selfspec_p2p457",
+          "id" : 40,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 458,
+            "line" : 457,
             "column" : 18,
             "source_fragment" : "stage_s.write(0, 2)"
           },
@@ -39119,14 +38876,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [69],
-          "actions" : ["detect_selfspec_p2p458"],
+          "action_ids" : [66],
+          "actions" : ["detect_selfspec_p2p457"],
           "base_default_next" : "tbl_stats_clear",
           "next_tables" : {
-            "detect_selfspec_p2p458" : "tbl_stats_clear"
+            "detect_selfspec_p2p457" : "tbl_stats_clear"
           },
           "default_entry" : {
-            "action_id" : 69,
+            "action_id" : 66,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39134,10 +38891,10 @@
         },
         {
           "name" : "tbl_stats_clear",
-          "id" : 44,
+          "id" : 41,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 459,
+            "line" : 458,
             "column" : 18,
             "source_fragment" : "stats_clear(0)"
           },
@@ -39163,10 +38920,10 @@
         },
         {
           "name" : "tbl_reset_counters",
-          "id" : 45,
+          "id" : 42,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 460,
+            "line" : 459,
             "column" : 18,
             "source_fragment" : "reset_counters()"
           },
@@ -39179,9 +38936,9 @@
           "direct_meters" : null,
           "action_ids" : [33],
           "actions" : ["MyIngress.reset_counters"],
-          "base_default_next" : "tbl_detect_selfspec_p2p463",
+          "base_default_next" : "tbl_detect_selfspec_p2p462",
           "next_tables" : {
-            "MyIngress.reset_counters" : "tbl_detect_selfspec_p2p463"
+            "MyIngress.reset_counters" : "tbl_detect_selfspec_p2p462"
           },
           "default_entry" : {
             "action_id" : 33,
@@ -39191,11 +38948,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p463",
-          "id" : 46,
+          "name" : "tbl_detect_selfspec_p2p462",
+          "id" : 43,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 463,
+            "line" : 462,
             "column" : 18,
             "source_fragment" : "d_subnet.write(0, subnet)"
           },
@@ -39206,25 +38963,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [70],
-          "actions" : ["detect_selfspec_p2p463"],
+          "action_ids" : [67],
+          "actions" : ["detect_selfspec_p2p462"],
           "base_default_next" : null,
           "next_tables" : {
-            "detect_selfspec_p2p463" : null
+            "detect_selfspec_p2p462" : null
           },
           "default_entry" : {
-            "action_id" : 70,
+            "action_id" : 67,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p471",
-          "id" : 47,
+          "name" : "tbl_detect_selfspec_p2p470",
+          "id" : 44,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 471,
+            "line" : 470,
             "column" : 20,
             "source_fragment" : "d_ip.write(0, meta.counter_value)"
           },
@@ -39235,25 +38992,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [71],
-          "actions" : ["detect_selfspec_p2p471"],
+          "action_ids" : [68],
+          "actions" : ["detect_selfspec_p2p470"],
           "base_default_next" : null,
           "next_tables" : {
-            "detect_selfspec_p2p471" : null
+            "detect_selfspec_p2p470" : null
           },
           "default_entry" : {
-            "action_id" : 71,
+            "action_id" : 68,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p484",
-          "id" : 48,
+          "name" : "tbl_detect_selfspec_p2p483",
+          "id" : 45,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 484,
+            "line" : 483,
             "column" : 10,
             "source_fragment" : "counter_value_s.write(0, hdr.ipv4.dstAddr[23:16])"
           },
@@ -39264,14 +39021,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [72],
-          "actions" : ["detect_selfspec_p2p484"],
-          "base_default_next" : "node_69",
+          "action_ids" : [69],
+          "actions" : ["detect_selfspec_p2p483"],
+          "base_default_next" : "node_63",
           "next_tables" : {
-            "detect_selfspec_p2p484" : "node_69"
+            "detect_selfspec_p2p483" : "node_63"
           },
           "default_entry" : {
-            "action_id" : 72,
+            "action_id" : 69,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39279,10 +39036,10 @@
         },
         {
           "name" : "tbl_drop_0",
-          "id" : 49,
+          "id" : 46,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 491,
+            "line" : 490,
             "column" : 12,
             "source_fragment" : "drop()"
           },
@@ -39295,9 +39052,9 @@
           "direct_meters" : null,
           "action_ids" : [24],
           "actions" : ["MyIngress.drop"],
-          "base_default_next" : "tbl_detect_selfspec_p2p494",
+          "base_default_next" : "tbl_detect_selfspec_p2p493",
           "next_tables" : {
-            "MyIngress.drop" : "tbl_detect_selfspec_p2p494"
+            "MyIngress.drop" : "tbl_detect_selfspec_p2p493"
           },
           "default_entry" : {
             "action_id" : 24,
@@ -39307,11 +39064,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p494",
-          "id" : 50,
+          "name" : "tbl_detect_selfspec_p2p493",
+          "id" : 47,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 494,
+            "line" : 493,
             "column" : 10,
             "source_fragment" : "switch"
           },
@@ -39322,14 +39079,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [73],
-          "actions" : ["detect_selfspec_p2p494"],
+          "action_ids" : [70],
+          "actions" : ["detect_selfspec_p2p493"],
           "base_default_next" : "switch_1_table",
           "next_tables" : {
-            "detect_selfspec_p2p494" : "switch_1_table"
+            "detect_selfspec_p2p493" : "switch_1_table"
           },
           "default_entry" : {
-            "action_id" : 73,
+            "action_id" : 70,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39337,10 +39094,10 @@
         },
         {
           "name" : "switch_1_table",
-          "id" : 51,
+          "id" : 48,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 494,
+            "line" : 493,
             "column" : 10,
             "source_fragment" : "switch"
           },
@@ -39359,11 +39116,11 @@
           "direct_meters" : null,
           "action_ids" : [38, 39, 40],
           "actions" : ["switch_1_case", "switch_1_case_0", "switch_1_case_1"],
-          "base_default_next" : "node_75",
+          "base_default_next" : "node_69",
           "next_tables" : {
             "switch_1_case" : "tbl_set_tracked_subnet_0",
             "switch_1_case_0" : "tbl_set_tracked_ip_0",
-            "switch_1_case_1" : "node_75"
+            "switch_1_case_1" : "node_69"
           },
           "default_entry" : {
             "action_id" : 40,
@@ -39375,7 +39132,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 495,
+                "line" : 494,
                 "column" : 12,
                 "source_fragment" : "1: { //track subnets - 1 ..."
               },
@@ -39394,7 +39151,7 @@
             {
               "source_info" : {
                 "filename" : "detect_selfspec_p2p.p4",
-                "line" : 498,
+                "line" : 497,
                 "column" : 12,
                 "source_fragment" : "2: { //track ips - 2 ..."
               },
@@ -39414,10 +39171,10 @@
         },
         {
           "name" : "tbl_set_tracked_subnet_0",
-          "id" : 52,
+          "id" : 49,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 496,
+            "line" : 495,
             "column" : 14,
             "source_fragment" : "set_tracked_subnet()"
           },
@@ -39430,9 +39187,9 @@
           "direct_meters" : null,
           "action_ids" : [30],
           "actions" : ["MyIngress.set_tracked_subnet"],
-          "base_default_next" : "node_75",
+          "base_default_next" : "node_69",
           "next_tables" : {
-            "MyIngress.set_tracked_subnet" : "node_75"
+            "MyIngress.set_tracked_subnet" : "node_69"
           },
           "default_entry" : {
             "action_id" : 30,
@@ -39443,10 +39200,10 @@
         },
         {
           "name" : "tbl_set_tracked_ip_0",
-          "id" : 53,
+          "id" : 50,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 499,
+            "line" : 498,
             "column" : 14,
             "source_fragment" : "set_tracked_ip()"
           },
@@ -39459,9 +39216,9 @@
           "direct_meters" : null,
           "action_ids" : [32],
           "actions" : ["MyIngress.set_tracked_ip"],
-          "base_default_next" : "node_75",
+          "base_default_next" : "node_69",
           "next_tables" : {
-            "MyIngress.set_tracked_ip" : "node_75"
+            "MyIngress.set_tracked_ip" : "node_69"
           },
           "default_entry" : {
             "action_id" : 32,
@@ -39471,11 +39228,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p507",
-          "id" : 54,
+          "name" : "tbl_detect_selfspec_p2p506",
+          "id" : 51,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 507,
+            "line" : 506,
             "column" : 14,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && entropy_track.apply().hit"
           },
@@ -39486,14 +39243,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [74],
-          "actions" : ["detect_selfspec_p2p507"],
-          "base_default_next" : "node_81",
+          "action_ids" : [71],
+          "actions" : ["detect_selfspec_p2p506"],
+          "base_default_next" : "node_75",
           "next_tables" : {
-            "detect_selfspec_p2p507" : "node_81"
+            "detect_selfspec_p2p506" : "node_75"
           },
           "default_entry" : {
-            "action_id" : 74,
+            "action_id" : 71,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39501,7 +39258,7 @@
         },
         {
           "name" : "MyIngress.entropy_track",
-          "id" : 55,
+          "id" : 52,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
             "line" : 186,
@@ -39538,7 +39295,7 @@
         },
         {
           "name" : "tbl_act_3",
-          "id" : 56,
+          "id" : 53,
           "key" : [],
           "match_type" : "exact",
           "type" : "simple",
@@ -39546,14 +39303,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [75],
+          "action_ids" : [72],
           "actions" : ["act_3"],
-          "base_default_next" : "tbl_detect_selfspec_p2p507_0",
+          "base_default_next" : "tbl_detect_selfspec_p2p506_0",
           "next_tables" : {
-            "act_3" : "tbl_detect_selfspec_p2p507_0"
+            "act_3" : "tbl_detect_selfspec_p2p506_0"
           },
           "default_entry" : {
-            "action_id" : 75,
+            "action_id" : 72,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39561,7 +39318,7 @@
         },
         {
           "name" : "tbl_act_4",
-          "id" : 57,
+          "id" : 54,
           "key" : [],
           "match_type" : "exact",
           "type" : "simple",
@@ -39569,25 +39326,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [76],
+          "action_ids" : [73],
           "actions" : ["act_4"],
-          "base_default_next" : "tbl_detect_selfspec_p2p507_0",
+          "base_default_next" : "tbl_detect_selfspec_p2p506_0",
           "next_tables" : {
-            "act_4" : "tbl_detect_selfspec_p2p507_0"
+            "act_4" : "tbl_detect_selfspec_p2p506_0"
           },
           "default_entry" : {
-            "action_id" : 76,
+            "action_id" : 73,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p507_0",
-          "id" : 58,
+          "name" : "tbl_detect_selfspec_p2p506_0",
+          "id" : 55,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 507,
+            "line" : 506,
             "column" : 14,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && entropy_track.apply().hit"
           },
@@ -39598,14 +39355,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [77],
-          "actions" : ["detect_selfspec_p2p507_0"],
-          "base_default_next" : "node_81",
+          "action_ids" : [74],
+          "actions" : ["detect_selfspec_p2p506_0"],
+          "base_default_next" : "node_75",
           "next_tables" : {
-            "detect_selfspec_p2p507_0" : "node_81"
+            "detect_selfspec_p2p506_0" : "node_75"
           },
           "default_entry" : {
-            "action_id" : 77,
+            "action_id" : 74,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39613,10 +39370,10 @@
         },
         {
           "name" : "tbl_stats_push_freq_2",
-          "id" : 59,
+          "id" : 56,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 509,
+            "line" : 508,
             "column" : 12,
             "source_fragment" : "stats_push_freq(tmp, meta.counter_value, 1)"
           },
@@ -39642,10 +39399,10 @@
         },
         {
           "name" : "tbl_stats_get_data_2",
-          "id" : 60,
+          "id" : 57,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 510,
+            "line" : 509,
             "column" : 12,
             "source_fragment" : "stats_get_data(meta.stats, 1)"
           },
@@ -39658,9 +39415,9 @@
           "direct_meters" : null,
           "action_ids" : [8],
           "actions" : ["stats_get_data"],
-          "base_default_next" : "node_84",
+          "base_default_next" : "node_78",
           "next_tables" : {
-            "stats_get_data" : "node_84"
+            "stats_get_data" : "node_78"
           },
           "default_entry" : {
             "action_id" : 8,
@@ -39670,11 +39427,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p517",
-          "id" : 61,
+          "name" : "tbl_detect_selfspec_p2p516",
+          "id" : 58,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 517,
+            "line" : 516,
             "column" : 16,
             "source_fragment" : "stage_s.write(0, 2)"
           },
@@ -39685,14 +39442,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [78],
-          "actions" : ["detect_selfspec_p2p517"],
+          "action_ids" : [75],
+          "actions" : ["detect_selfspec_p2p516"],
           "base_default_next" : "tbl_stats_clear_0",
           "next_tables" : {
-            "detect_selfspec_p2p517" : "tbl_stats_clear_0"
+            "detect_selfspec_p2p516" : "tbl_stats_clear_0"
           },
           "default_entry" : {
-            "action_id" : 78,
+            "action_id" : 75,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39700,10 +39457,10 @@
         },
         {
           "name" : "tbl_stats_clear_0",
-          "id" : 62,
+          "id" : 59,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 518,
+            "line" : 517,
             "column" : 16,
             "source_fragment" : "stats_clear(1)"
           },
@@ -39729,10 +39486,10 @@
         },
         {
           "name" : "tbl_reset_counters_0",
-          "id" : 63,
+          "id" : 60,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 519,
+            "line" : 518,
             "column" : 16,
             "source_fragment" : "reset_counters()"
           },
@@ -39745,9 +39502,9 @@
           "direct_meters" : null,
           "action_ids" : [34],
           "actions" : ["MyIngress.reset_counters"],
-          "base_default_next" : "tbl_detect_selfspec_p2p522",
+          "base_default_next" : "tbl_detect_selfspec_p2p521",
           "next_tables" : {
-            "MyIngress.reset_counters" : "tbl_detect_selfspec_p2p522"
+            "MyIngress.reset_counters" : "tbl_detect_selfspec_p2p521"
           },
           "default_entry" : {
             "action_id" : 34,
@@ -39757,11 +39514,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p522",
-          "id" : 64,
+          "name" : "tbl_detect_selfspec_p2p521",
+          "id" : 61,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 522,
+            "line" : 521,
             "column" : 16,
             "source_fragment" : "d_subnet.write(0, subnet)"
           },
@@ -39772,25 +39529,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [79],
-          "actions" : ["detect_selfspec_p2p522"],
+          "action_ids" : [76],
+          "actions" : ["detect_selfspec_p2p521"],
           "base_default_next" : null,
           "next_tables" : {
-            "detect_selfspec_p2p522" : null
+            "detect_selfspec_p2p521" : null
           },
           "default_entry" : {
-            "action_id" : 79,
+            "action_id" : 76,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p530",
-          "id" : 65,
+          "name" : "tbl_detect_selfspec_p2p526",
+          "id" : 62,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 530,
+            "line" : 526,
             "column" : 18,
             "source_fragment" : "d_ip.write(0, meta.counter_value)"
           },
@@ -39801,25 +39558,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [80],
-          "actions" : ["detect_selfspec_p2p530"],
+          "action_ids" : [77],
+          "actions" : ["detect_selfspec_p2p526"],
           "base_default_next" : null,
           "next_tables" : {
-            "detect_selfspec_p2p530" : null
+            "detect_selfspec_p2p526" : null
           },
           "default_entry" : {
-            "action_id" : 80,
+            "action_id" : 77,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p549",
-          "id" : 66,
+          "name" : "tbl_detect_selfspec_p2p544",
+          "id" : 63,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 549,
+            "line" : 544,
             "column" : 10,
             "source_fragment" : "next_bucket.read(bucket_idx, 0); ..."
           },
@@ -39830,14 +39587,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [88],
-          "actions" : ["detect_selfspec_p2p549"],
-          "base_default_next" : "node_94",
+          "action_ids" : [85],
+          "actions" : ["detect_selfspec_p2p544"],
+          "base_default_next" : "node_88",
           "next_tables" : {
-            "detect_selfspec_p2p549" : "node_94"
+            "detect_selfspec_p2p544" : "node_88"
           },
           "default_entry" : {
-            "action_id" : 88,
+            "action_id" : 85,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39845,10 +39602,10 @@
         },
         {
           "name" : "tbl_stats_get_data_3",
-          "id" : 67,
+          "id" : 64,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 554,
+            "line" : 549,
             "column" : 12,
             "source_fragment" : "stats_get_data(meta.stats, 1)"
           },
@@ -39861,9 +39618,9 @@
           "direct_meters" : null,
           "action_ids" : [9],
           "actions" : ["stats_get_data"],
-          "base_default_next" : "tbl_detect_selfspec_p2p555",
+          "base_default_next" : "tbl_detect_selfspec_p2p550",
           "next_tables" : {
-            "stats_get_data" : "tbl_detect_selfspec_p2p555"
+            "stats_get_data" : "tbl_detect_selfspec_p2p550"
           },
           "default_entry" : {
             "action_id" : 9,
@@ -39873,11 +39630,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p555",
-          "id" : 68,
+          "name" : "tbl_detect_selfspec_p2p550",
+          "id" : 65,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 555,
+            "line" : 550,
             "column" : 12,
             "source_fragment" : "stats_freq_internal.read(newmedian, (1 * 256) + meta.stats.Median)"
           },
@@ -39888,25 +39645,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [82],
-          "actions" : ["detect_selfspec_p2p555"],
-          "base_default_next" : "node_97",
+          "action_ids" : [79],
+          "actions" : ["detect_selfspec_p2p550"],
+          "base_default_next" : "node_91",
           "next_tables" : {
-            "detect_selfspec_p2p555" : "node_97"
+            "detect_selfspec_p2p550" : "node_91"
           },
           "default_entry" : {
-            "action_id" : 82,
+            "action_id" : 79,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p560",
-          "id" : 69,
+          "name" : "tbl_detect_selfspec_p2p555",
+          "id" : 66,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 560,
+            "line" : 555,
             "column" : 14,
             "source_fragment" : "isLfa.write(0,1); ..."
           },
@@ -39917,25 +39674,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [81],
-          "actions" : ["detect_selfspec_p2p560"],
-          "base_default_next" : "tbl_detect_selfspec_p2p582",
+          "action_ids" : [78],
+          "actions" : ["detect_selfspec_p2p555"],
+          "base_default_next" : "tbl_detect_selfspec_p2p577",
           "next_tables" : {
-            "detect_selfspec_p2p560" : "tbl_detect_selfspec_p2p582"
+            "detect_selfspec_p2p555" : "tbl_detect_selfspec_p2p577"
           },
           "default_entry" : {
-            "action_id" : 81,
+            "action_id" : 78,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p582",
-          "id" : 70,
+          "name" : "tbl_detect_selfspec_p2p577",
+          "id" : 67,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 582,
+            "line" : 577,
             "column" : 12,
             "source_fragment" : "distinctFlows.read(tmpDistinctFlowsCurrent, meta.index)"
           },
@@ -39946,14 +39703,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [84],
-          "actions" : ["detect_selfspec_p2p582"],
-          "base_default_next" : "node_100",
+          "action_ids" : [81],
+          "actions" : ["detect_selfspec_p2p577"],
+          "base_default_next" : "node_94",
           "next_tables" : {
-            "detect_selfspec_p2p582" : "node_100"
+            "detect_selfspec_p2p577" : "node_94"
           },
           "default_entry" : {
-            "action_id" : 84,
+            "action_id" : 81,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -39961,10 +39718,10 @@
         },
         {
           "name" : "tbl_median_tick",
-          "id" : 71,
+          "id" : 68,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 587,
+            "line" : 582,
             "column" : 14,
             "source_fragment" : "median_tick(1)"
           },
@@ -39990,10 +39747,10 @@
         },
         {
           "name" : "tbl_stats_push_freq_3",
-          "id" : 72,
+          "id" : 69,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 588,
+            "line" : 583,
             "column" : 14,
             "source_fragment" : "stats_push_freq(tmp, bucket_idx, 1)"
           },
@@ -40006,9 +39763,9 @@
           "direct_meters" : null,
           "action_ids" : [15],
           "actions" : ["stats_push_freq"],
-          "base_default_next" : "tbl_detect_selfspec_p2p592",
+          "base_default_next" : "tbl_detect_selfspec_p2p587",
           "next_tables" : {
-            "stats_push_freq" : "tbl_detect_selfspec_p2p592"
+            "stats_push_freq" : "tbl_detect_selfspec_p2p587"
           },
           "default_entry" : {
             "action_id" : 15,
@@ -40018,11 +39775,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p592",
-          "id" : 73,
+          "name" : "tbl_detect_selfspec_p2p587",
+          "id" : 70,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 592,
+            "line" : 587,
             "column" : 38,
             "source_fragment" : "= tmpDistinctFlowsCurrent + tmpDistinctFlowsByte; ..."
           },
@@ -40033,25 +39790,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [83],
-          "actions" : ["detect_selfspec_p2p592"],
-          "base_default_next" : "node_104",
+          "action_ids" : [80],
+          "actions" : ["detect_selfspec_p2p587"],
+          "base_default_next" : "node_98",
           "next_tables" : {
-            "detect_selfspec_p2p592" : "node_104"
+            "detect_selfspec_p2p587" : "node_98"
           },
           "default_entry" : {
-            "action_id" : 83,
+            "action_id" : 80,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p597",
-          "id" : 74,
+          "name" : "tbl_detect_selfspec_p2p592",
+          "id" : 71,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 597,
+            "line" : 592,
             "column" : 14,
             "source_fragment" : "distinctFlows.write(0,0); ..."
           },
@@ -40062,25 +39819,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [86],
-          "actions" : ["detect_selfspec_p2p597"],
-          "base_default_next" : "node_106",
+          "action_ids" : [83],
+          "actions" : ["detect_selfspec_p2p592"],
+          "base_default_next" : "node_100",
           "next_tables" : {
-            "detect_selfspec_p2p597" : "node_106"
+            "detect_selfspec_p2p592" : "node_100"
           },
           "default_entry" : {
-            "action_id" : 86,
+            "action_id" : 83,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p614",
-          "id" : 75,
+          "name" : "tbl_detect_selfspec_p2p609",
+          "id" : 72,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 614,
+            "line" : 609,
             "column" : 27,
             "source_fragment" : "="
           },
@@ -40091,14 +39848,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [85],
-          "actions" : ["detect_selfspec_p2p614"],
+          "action_ids" : [82],
+          "actions" : ["detect_selfspec_p2p609"],
           "base_default_next" : "tbl_drop_bucket_2",
           "next_tables" : {
-            "detect_selfspec_p2p614" : "tbl_drop_bucket_2"
+            "detect_selfspec_p2p609" : "tbl_drop_bucket_2"
           },
           "default_entry" : {
-            "action_id" : 85,
+            "action_id" : 82,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -40106,10 +39863,10 @@
         },
         {
           "name" : "tbl_drop_bucket_2",
-          "id" : 76,
+          "id" : 73,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 618,
+            "line" : 613,
             "column" : 14,
             "source_fragment" : "drop_bucket(bucket_idx, 1)"
           },
@@ -40122,9 +39879,9 @@
           "direct_meters" : null,
           "action_ids" : [19],
           "actions" : ["drop_bucket"],
-          "base_default_next" : "tbl_detect_selfspec_p2p619",
+          "base_default_next" : "tbl_detect_selfspec_p2p614",
           "next_tables" : {
-            "drop_bucket" : "tbl_detect_selfspec_p2p619"
+            "drop_bucket" : "tbl_detect_selfspec_p2p614"
           },
           "default_entry" : {
             "action_id" : 19,
@@ -40134,11 +39891,11 @@
           }
         },
         {
-          "name" : "tbl_detect_selfspec_p2p619",
-          "id" : 77,
+          "name" : "tbl_detect_selfspec_p2p614",
+          "id" : 74,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 619,
+            "line" : 614,
             "column" : 14,
             "source_fragment" : "next_bucket.write(0, bucket_idx)"
           },
@@ -40149,14 +39906,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [87],
-          "actions" : ["detect_selfspec_p2p619"],
+          "action_ids" : [84],
+          "actions" : ["detect_selfspec_p2p614"],
           "base_default_next" : null,
           "next_tables" : {
-            "detect_selfspec_p2p619" : null
+            "detect_selfspec_p2p614" : null
           },
           "default_entry" : {
-            "action_id" : 87,
+            "action_id" : 84,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -40217,7 +39974,7 @@
           "id" : 2,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 341,
+            "line" : 340,
             "column" : 14,
             "source_fragment" : "bucket_idx == 10"
           },
@@ -40235,7 +39992,7 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p342",
+          "true_next" : "tbl_detect_selfspec_p2p341",
           "false_next" : "tbl_stats_get_data_0"
         },
         {
@@ -40243,7 +40000,7 @@
           "id" : 3,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 357,
+            "line" : 356,
             "column" : 13,
             "source_fragment" : "tmpDistinctFlowsByte == 0"
           },
@@ -40309,7 +40066,7 @@
           "id" : 4,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 367,
+            "line" : 366,
             "column" : 14,
             "source_fragment" : "bucket_stamp > last_stamp"
           },
@@ -40331,7 +40088,7 @@
                       },
                       "right" : {
                         "type" : "hexstr",
-                        "value" : "0xf"
+                        "value" : "0x14"
                       }
                     }
                   },
@@ -40347,7 +40104,7 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p369",
+          "true_next" : "tbl_detect_selfspec_p2p368",
           "false_next" : "tbl_stats_push_freq_0"
         },
         {
@@ -40355,7 +40112,7 @@
           "id" : 5,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 382,
+            "line" : 381,
             "column" : 16,
             "source_fragment" : "nval > meta.stats.Xsum + (2 * meta.stats.StdNX)"
           },
@@ -40414,14 +40171,14 @@
             }
           },
           "true_next" : "tbl_drop_bucket",
-          "false_next" : "node_31"
+          "false_next" : "tbl_detect_selfspec_p2p404"
         },
         {
           "name" : "node_29",
           "id" : 6,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 387,
+            "line" : 386,
             "column" : 17,
             "source_fragment" : "hdr.tcp.isValid()"
           },
@@ -40436,67 +40193,15 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p390",
-          "false_next" : "node_31"
+          "true_next" : "tbl_detect_selfspec_p2p389",
+          "false_next" : "tbl_detect_selfspec_p2p404"
         },
         {
-          "name" : "node_31",
+          "name" : "node_32",
           "id" : 7,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 394,
-            "column" : 15,
-            "source_fragment" : "nval > peak"
-          },
-          "expression" : {
-            "type" : "expression",
-            "value" : {
-              "op" : ">",
-              "left" : {
-                "type" : "field",
-                "value" : ["scalars", "nval_0"]
-              },
-              "right" : {
-                "type" : "field",
-                "value" : ["scalars", "peak_0"]
-              }
-            }
-          },
-          "true_next" : "tbl_detect_selfspec_p2p396",
-          "false_next" : "node_33"
-        },
-        {
-          "name" : "node_33",
-          "id" : 8,
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 399,
-            "column" : 17,
-            "source_fragment" : "peak_pkt_count == 0"
-          },
-          "expression" : {
-            "type" : "expression",
-            "value" : {
-              "op" : "==",
-              "left" : {
-                "type" : "field",
-                "value" : ["scalars", "peak_pkt_count_0"]
-              },
-              "right" : {
-                "type" : "hexstr",
-                "value" : "0x0000"
-              }
-            }
-          },
-          "true_next" : "tbl_detect_selfspec_p2p400",
-          "false_next" : "tbl_detect_selfspec_p2p405"
-        },
-        {
-          "name" : "node_36",
-          "id" : 9,
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 408,
+            "line" : 407,
             "column" : 16,
             "source_fragment" : "bucket_idx == 10"
           },
@@ -40514,41 +40219,15 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p409",
+          "true_next" : "tbl_detect_selfspec_p2p408",
           "false_next" : "tbl_drop_bucket_0"
         },
         {
-          "name" : "node_41",
-          "id" : 10,
+          "name" : "node_38",
+          "id" : 8,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 417,
-            "column" : 15,
-            "source_fragment" : "ticks<10"
-          },
-          "expression" : {
-            "type" : "expression",
-            "value" : {
-              "op" : "<",
-              "left" : {
-                "type" : "field",
-                "value" : ["scalars", "ticks_0"]
-              },
-              "right" : {
-                "type" : "hexstr",
-                "value" : "0x000a"
-              }
-            }
-          },
-          "true_next" : "tbl_detect_selfspec_p2p418",
-          "false_next" : "tbl_stats_push_freq_0"
-        },
-        {
-          "name" : "node_44",
-          "id" : 11,
-          "source_info" : {
-            "filename" : "detect_selfspec_p2p.p4",
-            "line" : 431,
+            "line" : 430,
             "column" : 15,
             "source_fragment" : "subnet == detected_subnet && detected_ip == ip"
           },
@@ -40667,14 +40346,14 @@
             }
           },
           "true_next" : "tbl_drop",
-          "false_next" : "tbl_detect_selfspec_p2p434"
+          "false_next" : "tbl_detect_selfspec_p2p433"
         },
         {
-          "name" : "node_50",
-          "id" : 12,
+          "name" : "node_44",
+          "id" : 9,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 446,
+            "line" : 445,
             "column" : 16,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && hdr.tcp.flags == 16"
           },
@@ -40736,12 +40415,12 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p446",
+          "true_next" : "tbl_detect_selfspec_p2p445",
           "false_next" : "MyIngress.syn_track"
         },
         {
-          "name" : "node_56",
-          "id" : 13,
+          "name" : "node_50",
+          "id" : 10,
           "expression" : {
             "type" : "expression",
             "value" : {
@@ -40757,11 +40436,11 @@
           "true_next" : "tbl_stats_push_freq_1"
         },
         {
-          "name" : "node_59",
-          "id" : 14,
+          "name" : "node_53",
+          "id" : 11,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 456,
+            "line" : 455,
             "column" : 18,
             "source_fragment" : "nval > meta.stats.Xsum + (2 * meta.stats.StdNX)"
           },
@@ -40850,14 +40529,14 @@
             }
           },
           "false_next" : null,
-          "true_next" : "node_60"
+          "true_next" : "node_54"
         },
         {
-          "name" : "node_60",
-          "id" : 15,
+          "name" : "node_54",
+          "id" : 12,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 457,
+            "line" : 456,
             "column" : 19,
             "source_fragment" : "stage == 1"
           },
@@ -40875,15 +40554,15 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p458",
-          "false_next" : "node_65"
+          "true_next" : "tbl_detect_selfspec_p2p457",
+          "false_next" : "node_59"
         },
         {
-          "name" : "node_65",
-          "id" : 16,
+          "name" : "node_59",
+          "id" : 13,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 467,
+            "line" : 466,
             "column" : 26,
             "source_fragment" : "stage == 2"
           },
@@ -40902,14 +40581,14 @@
             }
           },
           "false_next" : null,
-          "true_next" : "node_66"
+          "true_next" : "node_60"
         },
         {
-          "name" : "node_66",
-          "id" : 17,
+          "name" : "node_60",
+          "id" : 14,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 470,
+            "line" : 469,
             "column" : 21,
             "source_fragment" : "subnet == detected_subnet && detected_ip == 0"
           },
@@ -40988,14 +40667,14 @@
             }
           },
           "false_next" : null,
-          "true_next" : "tbl_detect_selfspec_p2p471"
+          "true_next" : "tbl_detect_selfspec_p2p470"
         },
         {
-          "name" : "node_69",
-          "id" : 18,
+          "name" : "node_63",
+          "id" : 15,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 490,
+            "line" : 489,
             "column" : 13,
             "source_fragment" : "subnet == detected_subnet && detected_ip == ip"
           },
@@ -41114,14 +40793,14 @@
             }
           },
           "true_next" : "tbl_drop_0",
-          "false_next" : "tbl_detect_selfspec_p2p494"
+          "false_next" : "tbl_detect_selfspec_p2p493"
         },
         {
-          "name" : "node_75",
-          "id" : 19,
+          "name" : "node_69",
+          "id" : 16,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 507,
+            "line" : 506,
             "column" : 14,
             "source_fragment" : "meta.counter_value != 0xdeadbeef && hdr.tcp.isValid()"
           },
@@ -41163,12 +40842,12 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p507",
+          "true_next" : "tbl_detect_selfspec_p2p506",
           "false_next" : "MyIngress.entropy_track"
         },
         {
-          "name" : "node_81",
-          "id" : 20,
+          "name" : "node_75",
+          "id" : 17,
           "expression" : {
             "type" : "expression",
             "value" : {
@@ -41184,11 +40863,11 @@
           "true_next" : "tbl_stats_push_freq_2"
         },
         {
-          "name" : "node_84",
-          "id" : 21,
+          "name" : "node_78",
+          "id" : 18,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 515,
+            "line" : 514,
             "column" : 16,
             "source_fragment" : "nval > meta.stats.Xsum + (2 * meta.stats.StdNX)"
           },
@@ -41277,14 +40956,14 @@
             }
           },
           "false_next" : null,
-          "true_next" : "node_85"
+          "true_next" : "node_79"
         },
         {
-          "name" : "node_85",
-          "id" : 22,
+          "name" : "node_79",
+          "id" : 19,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 516,
+            "line" : 515,
             "column" : 17,
             "source_fragment" : "stage == 1"
           },
@@ -41302,15 +40981,15 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p517",
-          "false_next" : "node_90"
+          "true_next" : "tbl_detect_selfspec_p2p516",
+          "false_next" : "node_84"
         },
         {
-          "name" : "node_90",
-          "id" : 23,
+          "name" : "node_84",
+          "id" : 20,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 526,
+            "line" : 522,
             "column" : 24,
             "source_fragment" : "stage == 2"
           },
@@ -41329,14 +41008,14 @@
             }
           },
           "false_next" : null,
-          "true_next" : "node_91"
+          "true_next" : "node_85"
         },
         {
-          "name" : "node_91",
-          "id" : 24,
+          "name" : "node_85",
+          "id" : 21,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 529,
+            "line" : 525,
             "column" : 19,
             "source_fragment" : "subnet == detected_subnet && detected_ip == 0"
           },
@@ -41415,14 +41094,14 @@
             }
           },
           "false_next" : null,
-          "true_next" : "tbl_detect_selfspec_p2p530"
+          "true_next" : "tbl_detect_selfspec_p2p526"
         },
         {
-          "name" : "node_94",
-          "id" : 25,
+          "name" : "node_88",
+          "id" : 22,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 553,
+            "line" : 548,
             "column" : 13,
             "source_fragment" : "hdr.tcp.isValid()"
           },
@@ -41441,11 +41120,11 @@
           "true_next" : "tbl_stats_get_data_3"
         },
         {
-          "name" : "node_97",
-          "id" : 26,
+          "name" : "node_91",
+          "id" : 23,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 557,
+            "line" : 552,
             "column" : 15,
             "source_fragment" : "median!=0 && newmedian!=0 && ..."
           },
@@ -41503,15 +41182,15 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p560",
-          "false_next" : "tbl_detect_selfspec_p2p582"
+          "true_next" : "tbl_detect_selfspec_p2p555",
+          "false_next" : "tbl_detect_selfspec_p2p577"
         },
         {
-          "name" : "node_100",
-          "id" : 27,
+          "name" : "node_94",
+          "id" : 24,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 586,
+            "line" : 581,
             "column" : 15,
             "source_fragment" : "tmpDistinctFlowsByte == 0"
           },
@@ -41580,14 +41259,14 @@
             }
           },
           "true_next" : "tbl_median_tick",
-          "false_next" : "node_104"
+          "false_next" : "node_98"
         },
         {
-          "name" : "node_104",
-          "id" : 28,
+          "name" : "node_98",
+          "id" : 25,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 595,
+            "line" : 590,
             "column" : 16,
             "source_fragment" : "bucket_stamp > last_stamp"
           },
@@ -41609,7 +41288,7 @@
                       },
                       "right" : {
                         "type" : "hexstr",
-                        "value" : "0xf"
+                        "value" : "0x14"
                       }
                     }
                   },
@@ -41626,14 +41305,14 @@
             }
           },
           "false_next" : null,
-          "true_next" : "tbl_detect_selfspec_p2p597"
+          "true_next" : "tbl_detect_selfspec_p2p592"
         },
         {
-          "name" : "node_106",
-          "id" : 29,
+          "name" : "node_100",
+          "id" : 26,
           "source_info" : {
             "filename" : "detect_selfspec_p2p.p4",
-            "line" : 613,
+            "line" : 608,
             "column" : 18,
             "source_fragment" : "bucket_idx == 10"
           },
@@ -41651,7 +41330,7 @@
               }
             }
           },
-          "true_next" : "tbl_detect_selfspec_p2p614",
+          "true_next" : "tbl_detect_selfspec_p2p609",
           "false_next" : "tbl_drop_bucket_2"
         }
       ]
@@ -41661,7 +41340,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "detect_selfspec_p2p.p4",
-        "line" : 637,
+        "line" : 632,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },
