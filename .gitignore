@@ -221,3 +221,5 @@ network/utils/sll-header.h
 
 **.p4i
 **.json
+**.pyc
+**__init__.py

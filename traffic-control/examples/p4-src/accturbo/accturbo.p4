@@ -32,7 +32,7 @@ header ipv4_h {
     bit<3>  flags;
     bit<13> frag_offset;
     bit<8>  ttl;
-    bit<8>  proto;
+    bit<8>  protocol;
     bit<16> hdr_checksum;
     bit<32> src_addr;
     bit<8> dst0;
@@ -159,7 +159,7 @@ parser MyParser(packet_in packet,
     /* We only parse layer 4 if the packet is a first fragment (frag_offset == 0) and if ipv4 header contains no options (ihl == 5) */
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
-        transition select(hdr.ipv4.frag_offset, hdr.ipv4.proto, hdr.ipv4.ihl) {
+        transition select(hdr.ipv4.frag_offset, hdr.ipv4.protocol, hdr.ipv4.ihl) {
             (0, 6, 5)  : parse_transport;
             (0, 17, 5) : parse_transport;
             default : accept;
@@ -214,7 +214,7 @@ control MyIngress(inout headers hdr,
     register<bit<32>>(4) cluster4_min; // MIN dst0, dst1, dst2, dst3
     register<bit<32>>(4) cluster4_max; // MAX dst0, dst1, dst2, dst3
     /* Tables and actions to count the traffic of each cluster */
-    register<bit<32>>(1) bytes_counter;
+    register<bit<32>>(4) bytes_counter;
     /* Register to be used as counter for cluster initialization */
     register<bit<32>>(1) init_counter;
     /* Register to be used as counter to determine when to update clusters */
@@ -274,7 +274,7 @@ control MyIngress(inout headers hdr,
 
     action updateclusters_count(inout bit<32> data) {
         bit<8> current_value = 0;
-        if (data < 1000) {
+        if (data < 100) {
             data = data + 1; // Increment the register value
             current_value = (bit<8>)0; // Update activated is not set
         } else {
@@ -283,6 +283,17 @@ control MyIngress(inout headers hdr,
         }
         meta.update_activated = current_value;
     }
+
+    // table bytes_count {
+    //     key = {
+    //         meta.cluster_id : exact;
+    //     }
+    //     actions = {
+    //         count_bytes;
+    //     }
+    //     default_action = count_bytes; // Lowest-priority queue.
+    //     size = NUM_CLUSTERS;
+    // }
 
     /* Define the processing algorithm here */
     apply {
@@ -581,17 +592,17 @@ control MyIngress(inout headers hdr,
                         cluster1_min.read(data1, 1);
                         if (dst1 < data1) {
                             distance = data1 - dst1;
-                            cluster1_min.write(0, distance);
+                            cluster1_min.write(1, distance);
                         }
                         cluster2_min.read(data2, 2);
                         if (dst2 < data2) {
                             distance = data2 - dst2;
-                            cluster1_min.write(0, distance);
+                            cluster1_min.write(2, distance);
                         }
                         cluster2_min.read(data3, 3);
                         if (dst3 < data3) {
                             distance = data3 - dst3;
-                            cluster1_min.write(0, distance);
+                            cluster1_min.write(3, distance);
                         }
                         cluster1_max.read(data0, 0);
                         if (dst0 > data0) {
@@ -601,17 +612,17 @@ control MyIngress(inout headers hdr,
                         cluster1_max.read(data1, 1);
                         if (dst1 > data1) {
                             distance = dst1 - data1;
-                            cluster1_max.write(0, distance);
+                            cluster1_max.write(1, distance);
                         }
                         cluster1_max.read(data2, 2);
                         if (dst2 > data2) {
                             distance = dst2 - data2;
-                            cluster1_max.write(0, distance);
+                            cluster1_max.write(2, distance);
                         }
                         cluster1_max.read(data3, 3);
                         if (dst3 > data3) {
                             distance = dst3 - data3;
-                            cluster1_max.write(0, distance);
+                            cluster1_max.write(3, distance);
                         }
                     }
                     if (meta.cluster_id == 2) {
@@ -623,17 +634,17 @@ control MyIngress(inout headers hdr,
                         cluster2_min.read(data1, 1);
                         if (dst1 < data1) {
                             distance = data1 - dst1;
-                            cluster2_min.write(0, distance);
+                            cluster2_min.write(1, distance);
                         }
                         cluster2_min.read(data2, 2);
                         if (dst2 < data2) {
                             distance = data2 - dst2;
-                            cluster2_min.write(0, distance);
+                            cluster2_min.write(2, distance);
                         }
                         cluster2_min.read(data3, 3);
                         if (dst3 < data3) {
                             distance = data3 - dst3;
-                            cluster2_min.write(0, distance);
+                            cluster2_min.write(3, distance);
                         }
                         cluster2_max.read(data0, 0);
                         if (dst0 > data0) {
@@ -643,17 +654,17 @@ control MyIngress(inout headers hdr,
                         cluster2_max.read(data1, 1);
                         if (dst1 > data1) {
                             distance = dst1 - data1;
-                            cluster2_max.write(0, distance);
+                            cluster2_max.write(1, distance);
                         }
                         cluster2_max.read(data2, 2);
                         if (dst2 > data2) {
                             distance = dst2 - data2;
-                            cluster2_max.write(0, distance);
+                            cluster2_max.write(2, distance);
                         }
                         cluster2_max.read(data3, 3);
                         if (dst3 > data3) {
                             distance = dst3 - data3;
-                            cluster2_max.write(0, distance);
+                            cluster2_max.write(3, distance);
                         }
                     }
                     if (meta.cluster_id == 3) {
@@ -665,17 +676,17 @@ control MyIngress(inout headers hdr,
                         cluster3_min.read(data1, 1);
                         if (dst1 < data1) {
                             distance = data1 - dst1;
-                            cluster3_min.write(0, distance);
+                            cluster3_min.write(1, distance);
                         }
                         cluster3_min.read(data2, 2);
                         if (dst2 < data2) {
                             distance = data2 - dst2;
-                            cluster3_min.write(0, distance);
+                            cluster3_min.write(2, distance);
                         }
                         cluster3_min.read(data3, 3);
                         if (dst3 < data3) {
                             distance = data3 - dst3;
-                            cluster3_min.write(0, distance);
+                            cluster3_min.write(3, distance);
                         }
                         cluster3_max.read(data0, 0);
                         if (dst0 > data0) {
@@ -685,17 +696,17 @@ control MyIngress(inout headers hdr,
                         cluster3_max.read(data1, 1);
                         if (dst1 > data1) {
                             distance = dst1 - data1;
-                            cluster3_max.write(0, distance);
+                            cluster3_max.write(1, distance);
                         }
                         cluster3_max.read(data2, 2);
                         if (dst2 > data2) {
                             distance = dst2 - data2;
-                            cluster3_max.write(0, distance);
+                            cluster3_max.write(2, distance);
                         }
                         cluster3_max.read(data3, 3);
                         if (dst3 > data3) {
                             distance = dst3 - data3;
-                            cluster3_max.write(0, distance);
+                            cluster3_max.write(3, distance);
                         }
                     }
                     if (meta.cluster_id == 4) {
@@ -707,17 +718,17 @@ control MyIngress(inout headers hdr,
                         cluster4_min.read(data1, 1);
                         if (dst1 < data1) {
                             distance = data1 - dst1;
-                            cluster4_min.write(0, distance);
+                            cluster4_min.write(1, distance);
                         }
                         cluster4_min.read(data2, 2);
                         if (dst2 < data2) {
                             distance = data2 - dst2;
-                            cluster4_min.write(0, distance);
+                            cluster4_min.write(2, distance);
                         }
                         cluster4_min.read(data3, 3);
                         if (dst3 < data3) {
                             distance = data3 - dst3;
-                            cluster4_min.write(0, distance);
+                            cluster4_min.write(3, distance);
                         }
                         cluster4_max.read(data0, 0);
                         if (dst0 > data0) {
@@ -727,17 +738,17 @@ control MyIngress(inout headers hdr,
                         cluster4_max.read(data1, 1);
                         if (dst1 > data1) {
                             distance = dst1 - data1;
-                            cluster4_max.write(0, distance);
+                            cluster4_max.write(1, distance);
                         }
                         cluster4_max.read(data2, 2);
                         if (dst2 > data2) {
                             distance = dst2 - data2;
-                            cluster4_max.write(0, distance);
+                            cluster4_max.write(2, distance);
                         }
                         cluster4_max.read(data3, 3);
                         if (dst3 > data3) {
                             distance = dst3 - data3;
-                            cluster4_max.write(0, distance);
+                            cluster4_max.write(3, distance);
                         }
                     }
                 }                
@@ -746,8 +757,19 @@ control MyIngress(inout headers hdr,
                 cluster_to_prio.apply();
 
                 /* Stage 9: Compute the amount of traffic mapped to each cluster */
-                bytes_counter.read(tmp, 0);
-                bytes_counter.write(0, tmp + 1);
+                // bytes_counter.read(tmp, 0);
+                // bytes_counter.write(0, tmp + 1);
+                bit<32> current_count;
+                bit<32> idx = (bit<32>) meta.cluster_id - 1;
+            
+                // Read the current counter value
+                bytes_counter.read(current_count, idx);
+
+                // Add the packet's byte count
+                current_count = current_count + standard_metadata.packet_length;
+
+                // Write back the updated count
+                bytes_counter.write(idx, current_count);
             }
         }
     }

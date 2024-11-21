@@ -1,4 +1,41 @@
 register_write init_counter 0 1
+
+register_write cluster1_min 0 0
+register_write cluster1_max 0 127
+register_write cluster1_min 1 0
+register_write cluster1_max 1 127
+register_write cluster1_min 2 0
+register_write cluster1_max 2 127
+register_write cluster1_min 3 0
+register_write cluster1_max 3 127
+
+register_write cluster2_min 0 0
+register_write cluster2_max 0 255
+register_write cluster2_min 1 0
+register_write cluster2_max 1 255
+register_write cluster2_min 2 0
+register_write cluster2_max 2 127
+register_write cluster2_min 3 128
+register_write cluster2_max 3 255
+
+register_write cluster3_min 0 0
+register_write cluster3_max 0 255
+register_write cluster3_min 1 0
+register_write cluster3_max 1 255
+register_write cluster2_min 2 128
+register_write cluster3_max 2 255
+register_write cluster3_min 3 0
+register_write cluster3_max 3 127
+
+register_write cluster4_min 0 0
+register_write cluster4_max 0 255
+register_write cluster4_min 1 0
+register_write cluster4_max 1 255
+register_write cluster4_min 2 128
+register_write cluster4_max 2 255
+register_write cluster4_min 3 128
+register_write cluster4_max 3 255
+
 table_add MyIngress.cluster_to_prio MyIngress.set_prio_egress 4 => 0
 table_add MyIngress.cluster_to_prio MyIngress.set_prio_egress 3 => 1
 table_add MyIngress.cluster_to_prio MyIngress.set_prio_egress 2 => 2

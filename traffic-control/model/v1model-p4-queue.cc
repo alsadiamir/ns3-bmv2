@@ -49,6 +49,11 @@ namespace ns3 {
 
   V1ModelP4Queue::V1ModelP4Queue ()
   {
+    m_priorityQueue1 = CreateObject<DropTailQueue<Packet>> ();
+    m_priorityQueue2 = CreateObject<DropTailQueue<Packet>> ();
+    m_priorityQueue3 = CreateObject<DropTailQueue<Packet>> ();
+    m_priorityQueue4 = CreateObject<DropTailQueue<Packet>> ();
+
   }
 
   V1ModelP4Queue::~V1ModelP4Queue ()
@@ -100,7 +105,11 @@ namespace ns3 {
   V1ModelP4Queue::SetMaxQueueSize (uint32_t maxSize)
   {
     m_maxQueueSize = maxSize;
-    SetMaxSize (QueueSize(QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue1->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue2->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue3->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue4->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    // SetMaxSize (QueueSize(QueueSizeUnit::PACKETS, UINT32_MAX));
   }
 
   void 
@@ -113,6 +122,21 @@ namespace ns3 {
   V1ModelP4Queue::SetMaxThreshold (uint32_t maxThreshold)
   {
     m_maxThreshold = maxThreshold;
+  }
+
+  void
+  V1ModelP4Queue::SetOutPath (std::string outPath)
+  {
+    std::ofstream outputFile(outPath, std::ios::trunc);
+
+    // Check if the file was successfully opened
+    if (!outputFile) {
+        std::cerr << "Error opening output file!" << std::endl;
+    }
+    else{
+      m_outPath = outPath;
+    }
+    
   }
 
 } // namespace ns3
