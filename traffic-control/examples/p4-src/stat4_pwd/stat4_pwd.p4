@@ -77,16 +77,6 @@ header ipv4_t {
   ip4Addr_t   dstAddr;
 }
 
-// header debug_t{
-//   bit<32>   alert;
-//   bit<32>   counter_value;
-//   bit<32>   subnet;
-//   bit<32>   ip;
-//   bit<32>   lfa;
-//   bit<32>   index;
-//   bit<32>   hash_posix;
-// }
-
 header tcp_t {
   bit<16>     srcPort;
   bit<16>     dstPort;
@@ -120,7 +110,6 @@ struct headers {
   ipv4_t             ipv4;
   tcp_t              tcp;
   udp_t                   udp;
-  // debug_t                 debug;
 }
 
 /* ingress */
@@ -207,16 +196,18 @@ control MyIngress(inout headers hdr,
   }
 
   action set_tracked_ip() {
-    bit<32> ip_start;
-    bit<32> ip_byte_selected;
+    bit<24> subnetStart;
+    bit<32> subnet;
     bit<32> detected_subnet;
-    ip_start = hdr.ipv4.dstAddr >> 8;
-    ip_start = ip_start << 8;
+    bit<32> last_byte;
+
+    subnetStart = hdr.ipv4.dstAddr[31:8];
+    subnet = subnetStart ++ (bit<8>) 0;
 
     d_subnet.read(detected_subnet, 0);
-    if(ip_start == detected_subnet){
-      ip_byte_selected = hdr.ipv4.dstAddr - detected_subnet;
-      meta.counter_value = ip_byte_selected;
+    if(subnet == detected_subnet){
+      last_byte = (bit<32>)hdr.ipv4.dstAddr[7:0];
+      meta.counter_value = last_byte - 2;
     }    
   }
 
@@ -234,6 +225,10 @@ control MyIngress(inout headers hdr,
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 10, 0);
   }
 
+  action hash_subnet(bit<32> h_sub) {
+    meta.counter_value = h_sub;
+  }
+
   table dest_prefix_track {
     key = {
       hdr.ipv4.dstAddr: lpm;
@@ -245,6 +240,18 @@ control MyIngress(inout headers hdr,
     size = 1024;
     default_action = NoAction;
   }
+
+  table prefix_hash {
+    key = {
+      hdr.ipv4.dstAddr: lpm;
+    }
+    actions = {
+      hash_subnet;
+      NoAction;
+    }
+    size = 16;
+    default_action = NoAction;
+  }  
 
   apply { 
 
@@ -273,9 +280,7 @@ control MyIngress(inout headers hdr,
     bit<1> sent;
     bit<32> packets;
     bit<1> dep;
-    bit<9> egress_prio;
-
-    // hdr.debug.setInvalid();     
+    bit<9> egress_prio; 
   
     // Default no-match value.
     meta.counter_value = 0xdeadbeef;
@@ -331,9 +336,6 @@ control MyIngress(inout headers hdr,
           bit<8> hash_posix;
           bit<32> index;
 
-          // if (bucket_idx == WINDOW_SIZE) {
-          //   bucket_idx = 0;
-          // }
           // Increment the packets bucket
           stats_push_freq(tmp, bucket_idx, COUNTER_TOPLEVEL);
 
@@ -487,6 +489,7 @@ control MyIngress(inout headers hdr,
           switch (stage) {
             1: { //track subnets - 1
               set_tracked_subnet();
+              prefix_hash.apply();
             }
             2: { //track ips - 2
               set_tracked_ip();
@@ -510,14 +513,14 @@ control MyIngress(inout headers hdr,
                 stage_s.write(0, 2);
                 stats_clear(COUNTER_REFINE);
                 reset_counters();
-                subnetStart = (bit<16>) 0x0a01 ++ (bit<8>) (meta.counter_value);
+                subnetStart = hdr.ipv4.dstAddr[31:8];
                 subnet = subnetStart ++ (bit<8>) 0;
                 d_subnet.write(0, subnet);    
               } else if(stage == 2){
                 subnet = hdr.ipv4.dstAddr >> 8;
                 subnet = subnet << 8;
                 if(subnet == detected_subnet && detected_ip == 0){
-                  d_ip.write(0, meta.counter_value);
+                  d_ip.write(0, meta.counter_value+2);
                 }
               }
             } 
@@ -654,8 +657,6 @@ control MyDeparser(packet_out packet, in headers hdr)
     packet.emit(hdr.ipv4);
     packet.emit(hdr.tcp);
     packet.emit(hdr.udp);
-
-    // packet.emit(hdr.debug);
   }
 }
 

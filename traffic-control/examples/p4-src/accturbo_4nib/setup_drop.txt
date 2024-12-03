@@ -1,0 +1,26 @@
+register_write init_counter 0 1
+
+register_write cluster1_min 0 255
+register_write cluster1_min 1 255
+register_write cluster1_min 2 255
+register_write cluster1_min 3 255
+
+register_write cluster2_min 0 255
+register_write cluster2_min 1 255
+register_write cluster2_min 2 255
+register_write cluster2_min 3 255
+
+register_write cluster3_min 0 255
+register_write cluster3_min 1 255
+register_write cluster3_min 2 255
+register_write cluster3_min 3 255
+
+register_write cluster4_min 0 255
+register_write cluster4_min 1 255
+register_write cluster4_min 2 255
+register_write cluster4_min 3 255
+
+table_add MyIngress.cluster_to_prio MyIngress.set_qid 4 => 3
+table_add MyIngress.cluster_to_prio MyIngress.set_qid 3 => 2
+table_add MyIngress.cluster_to_prio MyIngress.set_qid 2 => 1
+table_add MyIngress.cluster_to_prio MyIngress.set_qid 1 => 0

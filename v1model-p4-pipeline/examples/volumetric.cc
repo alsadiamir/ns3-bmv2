@@ -24,9 +24,10 @@ NS_LOG_COMPONENT_DEFINE ("Stat4Entropy2SwitchesTracingExample");
 void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces)
 {
     // Create TCP flows from client to each server
-    uint16_t port = 8080;
+    
     for (uint32_t i = 0; i < serverNodes.GetN(); ++i)
     {
+        uint16_t port = rand() % 32768;
         // Install PacketSink on each server (to act as TCP receiver)
         Address serverAddress(InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
         PacketSinkHelper sinkHelper("ns3::TcpSocketFactory", serverAddress);
@@ -37,14 +38,14 @@ void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCo
         BulkSendHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
-        clientApp.Start(Seconds(2.0 + i));  // Start each flow with a slight delay
+        clientApp.Start(Seconds(2.0));  // Start each flow with a slight delay
     }
 }
 
 void StartDoS(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces)
 {
     // Create TCP flows from client to each server
-    uint16_t port = 2150;
+    uint16_t port = 60000;
 
     Address serverAddress(InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
     PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", serverAddress);
@@ -57,39 +58,22 @@ void StartDoS(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCont
     OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
     clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
     clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-    clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("4Mbps")));
-    clientHelper.SetAttribute("PacketSize", UintegerValue(1024));  // Packet size
+    clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("9.9Mbps")));
+    // clientHelper.SetAttribute("PacketSize", UintegerValue(1200));  // Packet size
 
     ApplicationContainer clientApp = clientHelper.Install(clientNode);
     clientApp.Start(Seconds(20.0));  // Start each flow with a slight delay
     clientApp.Stop(Seconds(45.0));
+
+    // Ptr<UdpSocket> srcSocket = DynamicCast<UdpSocket>(
+    //     clientNode->GetObject<Socket>());
+    // srcSocket->Bind(InetSocketAddress(Ipv4Address::GetAny(), 50000)); // Fixed source port
 }
 
 void StartLFA(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces)
 {
-    // Create TCP flows from client to each server
-    uint16_t port = 2150;
-
-    Address serverAddress(InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
-    PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", serverAddress);
-    ApplicationContainer serverApp = sinkHelper.Install(serverNodes.Get(1));
-    serverApp.Start(Seconds(0.0));
-    // serverApp.Stop(Seconds(50.0));
-
-
-    // Install TCP OnOff client on the client node (to act as TCP sender)
-    OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
-    clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-    clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-    clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("4Mbps")));
-    clientHelper.SetAttribute("PacketSize", UintegerValue(1024));  // Packet size
-
-    ApplicationContainer clientApp = clientHelper.Install(clientNode);
-    clientApp.Start(Seconds(20.0));  // Start each flow with a slight delay
-    clientApp.Stop(Seconds(45.0));
+    //TODO: Implement LFA attack
 }
-
-
 
 void QueueSizeTrace(Ptr<Queue<Packet>> queue) {
     uint32_t currentSize = queue->GetNPackets();
@@ -106,17 +90,24 @@ void PacketDropCallback(Ptr<const Packet> packet) {
 }
 
 void UpdateCluster(){
-    std::system("python3 /home/mininet/ns3-repos/ns-3-allinone/ns-3.29/src/bmv2-tools/controller.py");
-    Simulator::Schedule(Seconds(5), &UpdateCluster);
+    std::system("python3 /home/mininet/ns3-repos/ns-3-allinone/ns-3.29/src/bmv2-tools/controller.py --thrift-port 9090");
+    Simulator::Schedule(Seconds(0.1), &UpdateCluster);
+}
+
+void DebugStat4(std::string log_file){
+    std::string cmd = "python3 /home/mininet/ns3-repos/ns-3-allinone/ns-3.29/src/bmv2-tools/debug_stat4.py --thrift-port 9091 --log-file "+log_file;
+    std::system(cmd.c_str());
+    Simulator::Schedule(Seconds(0.1), &DebugStat4, log_file);
 }
 
 int main(int argc, char *argv[])
 {
     Time::SetResolution (Time::NS);
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpWestwood"));
-    std::string outPcap = "trace-data/anomaly-entropy/withattack";
+    std::string outPcap = "trace-data/dos/";
+    std::string suffix = "fifo";
+    std::string bottleneck = "15Mbps";
     bool p4Enabled = false;
-    bool attackEnabled = false;
     bool deprioEnabled = false;
     bool dropEnabled = false;
     bool accturboEnabled = false;
@@ -129,8 +120,8 @@ int main(int argc, char *argv[])
     cmd.AddValue ("deprioEnabled", "Enable Deprioritization, Default FALSE", deprioEnabled);
     cmd.AddValue ("dropEnabled", "Enable Dropping, Default FALSE", dropEnabled);
     cmd.AddValue ("accturboEnabled", "Enable AccTurbo, Default FALSE", accturboEnabled);
-    cmd.AddValue ("dosEnabled", "Enable DoS Attack", attackEnabled);
-    cmd.AddValue ("lfaEnabled", "Enable Link Flooding Attack", attackEnabled);
+    cmd.AddValue ("dosEnabled", "Enable DoS Attack", dosEnabled);
+    cmd.AddValue ("lfaEnabled", "Enable Link Flooding Attack", lfaEnabled);
     cmd.Parse (argc, argv);
 
 
@@ -172,15 +163,19 @@ int main(int argc, char *argv[])
 
 
     PointToPointHelper p2pc;
-    p2pc.SetDeviceAttribute("DataRate", StringValue("1Mbps"));
+    p2pc.SetDeviceAttribute("DataRate", StringValue("800Kbps"));
     p2pc.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
 
+    // if(accturboEnabled){
+    //     bottleneck = "1Mbps";
+    // }
+
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("7Mbps"));
+    p2p.SetDeviceAttribute("DataRate", StringValue(bottleneck));
     p2p.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
 
     PointToPointHelper p2pa;
-    p2pa.SetDeviceAttribute("DataRate", StringValue("4Mbps"));
+    p2pa.SetDeviceAttribute("DataRate", StringValue("9.9Mbps"));
     p2pa.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
 
     PointToPointHelper p2p2;
@@ -211,7 +206,7 @@ int main(int argc, char *argv[])
 
     // Set up a queue with a maximum of 10 packets
     if (p4Enabled == false){
-        Ptr<PointToPointNetDevice> device = DynamicCast<PointToPointNetDevice>(router2Router3Devices.Get(0));
+        Ptr<PointToPointNetDevice> device = DynamicCast<PointToPointNetDevice>(r2Device);
         Ptr<Queue<Packet>> queue = device->GetQueue();
         queue->SetAttribute("MaxSize", QueueSizeValue(QueueSize(QueueSizeUnit::PACKETS, 4)));
     }
@@ -238,36 +233,46 @@ int main(int argc, char *argv[])
             Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
             customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/stat4_pwd/stat4_pwd.json", "src/traffic-control/examples/p4-src/stat4_pwd/anomaly.txt");
             Ptr<PointToPointNetDevice> p2pDevice = r1Device->GetObject<PointToPointNetDevice> ();
-            // customQueue->SetAttribute("MaxQueueSize", UintegerValue(UINT32_MAX));
-            customQueue->SetOutPath(outPcap+"/first_sw.txt");
+            // customQueue->SetAttribute("MaxQueueSize", UintegerValue(100));
             p2pDevice->SetQueue(customQueue);
-        }
+        
 
-        Ptr<V1ModelP4Queue> customQueue2 = CreateObject<V1ModelP4Queue> ();
-        std::string p4file = "src/traffic-control/examples/p4-src/stat4_pwd/stat4_pwd.json";
-        std::string file = "src/traffic-control/examples/p4-src/stat4_pwd/anomaly.txt";
-        customQueue2->SetAttribute("MaxQueueSize", UintegerValue(1));
-        if(deprioEnabled){
-            NS_LOG_INFO ("Deprioritization Enabled.");
-            file = "src/traffic-control/examples/p4-src/stat4_pwd/entropy_deprio.txt";
-            customQueue2->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
-        } 
-        if (dropEnabled){
-            NS_LOG_INFO ("Dropping Enabled.");
-            file = "src/traffic-control/examples/p4-src/stat4_pwd/anomaly.txt";
-        }   
-        if (accturboEnabled){
+            Ptr<V1ModelP4Queue> customQueue2 = CreateObject<V1ModelP4Queue> ();
+            std::string p4file = "src/traffic-control/examples/p4-src/stat4_pwd/stat4_pwd.json";
+            std::string file = "src/traffic-control/examples/p4-src/stat4_pwd/anomaly.txt";
+            customQueue2->SetAttribute("MaxQueueSize", UintegerValue(1));
+            if(deprioEnabled){
+                NS_LOG_INFO ("Deprioritization Enabled.");
+                file = "src/traffic-control/examples/p4-src/stat4_pwd/entropy_deprio_subhash.txt";
+                customQueue2->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
+                suffix = "stat4-deprio";
+            } 
+            if (dropEnabled){
+                NS_LOG_INFO ("Dropping Enabled.");
+                file = "src/traffic-control/examples/p4-src/stat4_pwd/entropy_drop_subhash.txt";
+                suffix = "stat4-drop";
+            }   
+            customQueue2->CreateP4Pipe (p4file, file);
+            customQueue2->SetOutPath(outPcap+"/second_sw.txt");
+            Ptr<PointToPointNetDevice> p2pDevice2 = r2Device->GetObject<PointToPointNetDevice> ();
+            // Simulator::Schedule(Seconds(0), &DebugStat4, outPcap+"/stat4debug.log");
+            p2pDevice2->SetQueue(customQueue2);
+        } else {
             NS_LOG_INFO ("Accturbo Enabled.");
-            p4file = "src/traffic-control/examples/p4-src/accturbo/accturbo.json";
-            file = "src/traffic-control/examples/p4-src/accturbo/setup_prio.txt";
-            customQueue2->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
-            Simulator::Schedule(Seconds(1), &UpdateCluster);
+            Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
+            std::string p4file = "src/traffic-control/examples/p4-src/accturbo/accturbo.json";
+            std::string file = "src/traffic-control/examples/p4-src/accturbo/setup_prio.txt";
+
+            Ptr<PointToPointNetDevice> p2pDevice = r2Device->GetObject<PointToPointNetDevice> ();
+
+            customQueue->CreateP4Pipe (p4file, file);
+            customQueue->SetAttribute("MaxQueueSize", UintegerValue(1));
+            customQueue->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
+            customQueue->SetOutPath(outPcap+"second_sw.txt");
+            Simulator::Schedule(Seconds(0), &UpdateCluster);
+            p2pDevice->SetQueue(customQueue);
+            suffix = "accturbobad";
         }
-        customQueue2->CreateP4Pipe (p4file, file);
-        customQueue2->SetOutPath(outPcap+"/second_sw.txt");
-        Ptr<PointToPointNetDevice> p2pDevice2 = r2Device->GetObject<PointToPointNetDevice> ();
-        // customQueue2->TraceConnectWithoutContext("Drop", MakeCallback(&PacketDropCallback));
-        p2pDevice2->SetQueue(customQueue2);
     }
 
     // Assign IP addresses
@@ -336,18 +341,20 @@ int main(int argc, char *argv[])
     StartFlows(serverNodes4, clientNode, routerServerInterfaces4);
     StartFlows(serverNodes5, clientNode, routerServerInterfaces5);
     StartFlows(serverNodes6, clientNode, routerServerInterfaces6);
+    // StartFlows(serverNodesAtk, clientNode, routerServerInterfacesAtk);
 
     if(dosEnabled){
         StartDoS(serverNodes1, attackerNode, routerServerInterfaces1); //to keep same IP for analysis
-        NS_LOG_INFO("Attack Enabled.");
+        // StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk);
+        NS_LOG_INFO("DoS Attack Enabled.");
     }
     if(lfaEnabled){
-        StartLFA(serverNodes1, attackerNode, routerServerInterfaces1); //to keep same IP for analysis
-        NS_LOG_INFO("Attack Enabled.");
+        StartLFA(serverNodes1, attackerNode, routerServerInterfaces1); //TODO: Not implemented yet
+        NS_LOG_INFO("Link Flooding Attack Enabled.");
     }
 
     // csma.EnablePcapAll(outPcap+"/packets");  // Trace packets on server side
-    p2p2.EnablePcap(outPcap+"/egress-router", router3Router4Devices.Get(1), true);
+    p2p2.EnablePcap(outPcap+suffix, router3Router4Devices.Get(1), true);
     NS_LOG_INFO ("PCAP packets will be written in folder: " << outPcap);
     
     // Enable routing globally
