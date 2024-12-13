@@ -18,7 +18,7 @@
 
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE ("Stat4Entropy2SwitchesTracingExample");
+NS_LOG_COMPONENT_DEFINE ("ACCTurboFig7b");
 
 
 void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces)
@@ -32,19 +32,8 @@ void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCo
         PacketSinkHelper sinkHelper("ns3::TcpSocketFactory", serverAddress);
         ApplicationContainer serverApp = sinkHelper.Install(serverNodes.Get(i));
         serverApp.Start(Seconds(1.0));
-        // UdpServerHelper server(port);
-        // server.Install(serverNodes.Get(i)).Start(Seconds(1.0));
 
-
-        // Install TCP OnOff client on the client node (to act as TCP sender)
-        // OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
-        // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-        // clientHelper.SetAttribute("PacketSize", UintegerValue(1200));  // Packet size
-        // clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("50Kbps")));
         BulkSendHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
-        // UdpClientHelper clientHelper(InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
-        // clientHelper.SetAttribute("PacketSize", UintegerValue(1200));  // Packet size
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
         clientApp.Start(Seconds(2.0 + i));  // Start each flow with a slight delay
@@ -56,32 +45,20 @@ void StartVolumetricFlow(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4In
     // Create TCP flows from client to each server
     uint16_t port = 2150;
     uint32_t naddr = 100;
-    // for (int port = 2000; port<2100; port ++)
-    // { // Install PacketSink on each server (to act as TCP receiver)
-        Address serverAddress(InetSocketAddress(routerServerInterfaces.GetAddress(naddr), port));
-        PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", serverAddress);
-        ApplicationContainer serverApp = sinkHelper.Install(serverNodes.Get(naddr-1));
-        serverApp.Start(Seconds(0.0));
-        // UdpServerHelper server(port);
-        // server.Install(serverNodes.Get(naddr-1)).Start(Seconds(0.0));
 
+    Address serverAddress(InetSocketAddress(routerServerInterfaces.GetAddress(naddr), port));
+    PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", serverAddress);
+    ApplicationContainer serverApp = sinkHelper.Install(serverNodes.Get(naddr-1));
+    serverApp.Start(Seconds(0.0));
+    // Install TCP OnOff client on the client node (to act as TCP sender)
+    OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(naddr), port));
+    clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+    clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+    clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("9.9Mbps")));  // Data rate
 
-        // Install TCP OnOff client on the client node (to act as TCP sender)
-        OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(naddr), port));
-        clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-        
-        // clientHelper.SetAttribute("PacketSize", UintegerValue(1200));
-        
-        // UdpClientHelper clientHelper(InetSocketAddress(routerServerInterfaces.GetAddress(naddr), port));
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("9.9Mbps")));  // Data rate
-        // clientHelper.SetAttribute("PacketSize", UintegerValue(1200));  // Packet size
+    ApplicationContainer clientApp = clientHelper.Install(clientNode);
+    clientApp.Start(Seconds(20.0));  // Start each flow with a slight delay
 
-        // BulkSendHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(naddr), port));
-
-        ApplicationContainer clientApp = clientHelper.Install(clientNode);
-        clientApp.Start(Seconds(20.0));  // Start each flow with a slight delay
-    // }
 }
 
 
@@ -112,7 +89,8 @@ int main(int argc, char *argv[])
 {
     Time::SetResolution (Time::NS);
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpWestwood"));
-    std::string outPcap = "trace-data/anomaly-entropy/withattack";
+    std::string outPcap = "trace-data/fig7b/";
+    std::string suffix = "fifo";
     bool accturboEnabled = false;
     
     CommandLine cmd;
@@ -121,7 +99,7 @@ int main(int argc, char *argv[])
     cmd.Parse (argc, argv);
 
 
-    LogComponentEnable ("Stat4Entropy2SwitchesTracingExample", LOG_LEVEL_INFO);
+    LogComponentEnable ("ACCTurboFig7b", LOG_LEVEL_INFO);
     Packet::EnablePrinting ();
     // Create nodes
     Ptr<Node> clientNode = CreateObject<Node> ();
@@ -185,7 +163,6 @@ int main(int argc, char *argv[])
     NetDeviceContainer attackerRouterDevices = p2pa.Install(NodeContainer(attackerNode, routerNode1));
     NetDeviceContainer router1Router2Devices = p2p2.Install(NodeContainer(routerNode1, routerNode2));
     NetDeviceContainer router2Router3Devices = p2p2.Install(NodeContainer(routerNode2, routerNode3));
-    // NetDeviceContainer router3Router4Devices = p2p2.Install(NodeContainer(routerNode3, routerNode4));
     NetDeviceContainer routerServerDevices1 = csma.Install(routerToServers1);
     NetDeviceContainer routerServerDevices2 = csma.Install(routerToServers2);
     NetDeviceContainer routerServerDevices3 = csma.Install(routerToServers3);
@@ -198,12 +175,9 @@ int main(int argc, char *argv[])
 
 
     if(accturboEnabled == false){
-        // p2p2.SetQueue("ns3::DropTailQueue", "MaxSize", QueueSizeValue(QueueSize("1p")));
         Ptr<PointToPointNetDevice> device = DynamicCast<PointToPointNetDevice>(router1Router2Devices.Get(0));
         Ptr<Queue<Packet>> queue = device->GetQueue();
         queue->SetAttribute("MaxSize", QueueSizeValue(QueueSize(QueueSizeUnit::PACKETS, 4)));
-        // queue->TraceConnectWithoutContext("PacketsInQueue", MakeCallback(&QueueSizeCallback));
-        // queue->TraceConnectWithoutContext("Drop", MakeCallback(&PacketDropCallback));
     }
 
     // Install Internet stack on all nodes
@@ -213,7 +187,6 @@ int main(int argc, char *argv[])
     internet.Install(routerNode1);
     internet.Install(routerNode2);
     internet.Install(routerNode3);
-    // internet.Install(routerNode4);
     internet.Install(serverNodes1);
     internet.Install(serverNodes2);
     internet.Install(serverNodes3);
@@ -236,9 +209,10 @@ int main(int argc, char *argv[])
         customQueue2->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
         Simulator::Schedule(Seconds(0), &UpdateCluster);
         customQueue2->CreateP4Pipe (p4file, file);
-        customQueue2->SetOutPath(outPcap+"/second_sw.txt");
+        // customQueue2->SetOutPath(outPcap+"/second_sw.txt");
         Ptr<PointToPointNetDevice> p2pDevice2 = rDevice->GetObject<PointToPointNetDevice> ();
         p2pDevice2->SetQueue(customQueue2);
+        suffix = "accturbo";
     }
 
     // Assign IP addresses
@@ -256,9 +230,6 @@ int main(int argc, char *argv[])
 
     address.SetBase("10.2.0.0", "255.255.255.0");
     Ipv4InterfaceContainer router2Router3Interfaces = address.Assign(router2Router3Devices);
-
-    // address.SetBase("10.3.0.0", "255.255.255.0");
-    // Ipv4InterfaceContainer router3Router4Interfaces = address.Assign(router3Router4Devices);
     
     // Router and servers
     address.SetBase("160.15.33.0", "255.255.255.0");  // Router and Server subnet
@@ -297,9 +268,6 @@ int main(int argc, char *argv[])
     Ptr<Ipv4> ipv4Router3 = routerNode3->GetObject<Ipv4>();
     ipv4Router3->SetAttribute("IpForward", BooleanValue(true));
 
-    // Ptr<Ipv4> ipv4Router4 = routerNode4->GetObject<Ipv4>();
-    // ipv4Router4->SetAttribute("IpForward", BooleanValue(true));
-
     // Start TCP flows
     StartFlows(serverNodes1, clientNode, routerServerInterfaces1);
     StartFlows(serverNodes2, clientNode, routerServerInterfaces2);
@@ -311,8 +279,7 @@ int main(int argc, char *argv[])
     StartVolumetricFlow(serverNodesAtk, attackerNode, routerServerInterfacesAtk); //to keep same IP for analysis
     NS_LOG_INFO("Attack Enabled.");
 
-    // csma.EnablePcapAll(outPcap+"/packets");  // Trace packets on server side
-    p2p.EnablePcap(outPcap+"/egress-router", router1Router2Devices.Get(1), true);
+    p2p.EnablePcap(outPcap+suffix, router1Router2Devices.Get(1), true);
     NS_LOG_INFO ("PCAP packets will be written in folder: " << outPcap);
     
     // Enable routing globally

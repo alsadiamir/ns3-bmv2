@@ -25,10 +25,11 @@
 // In microseconds: 1048576us ~ 1sec.
 // 10 windows = 10sec.
 // 2-standard deviation from mean is considered anomalous.
-#define BUCKET_SIZE 19
+// #define BUCKET_SIZE 15
 #define WINDOW_SIZE 10
 #define SPLIT_SIZE 5
 #define STDEV_RANGE 2
+#define STDEV_RANGE_REFINEMENT 2
 #define SRC_ATK_PORT 1501
 
 // Counter indices.
@@ -133,8 +134,16 @@ control MyIngress(inout headers hdr,
 
   register<bit<8>>(1)  counter_value_s;
   register<bit<1>>(1)  sent_s;
-  register<bit<32>>(1) packets_s;
+  register<bit<1>>(1)  reset_s;
+  register<bit<1>>(1)  specialize_s;
+  register<bit<16>>(1) packets_s;
+  register<bit<32>>(1) nval_s;
+  register<bit<8>>(1) bucket_size_s;
+  // register<bit<32>>(1) filled_s;
   register<bit<1>>(1) deprio; 
+
+  // register<bit<32>>(4 * STAT_FREQ_COUNTER_N) stats_normal_data;
+  // register<bit<32>>(4 * STAT_FREQ_COUNTER_N) median_normal_data;
 
   // Normal L2 learning tables
   action drop() {
@@ -212,6 +221,7 @@ control MyIngress(inout headers hdr,
   }
 
   action reset_counters() {
+
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE), 0);
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 1, 0);
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 2, 0);
@@ -223,6 +233,18 @@ control MyIngress(inout headers hdr,
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 8, 0);
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 9, 0);
     stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 10, 0);
+  
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE), 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 1, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 2, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 3, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 4, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 5, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 6, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 7, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 8, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 9, 0);
+    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 10, 0);
   }
 
   action hash_subnet(bit<32> h_sub) {
@@ -278,18 +300,26 @@ control MyIngress(inout headers hdr,
     bit<16> peak_pkt_count;
     bit<32> peak;
     bit<1> sent;
-    bit<32> packets;
+    bit<1> reset;
+    bit<1> specialize;
+    bit<16> packets;
     bit<1> dep;
     bit<9> egress_prio; 
+    bit<32> saved_nval;
+    bit<32> median_tmp;
+    bit<8> bucket_size;
+    
+    // bit<32> filled;
   
     // Default no-match value.
     meta.counter_value = 0xdeadbeef;
-    bucket_stamp = standard_metadata.ingress_global_timestamp >> BUCKET_SIZE;
+    bucket_size_s.read(bucket_size, 0);
+    bucket_stamp = standard_metadata.ingress_global_timestamp >> bucket_size;
     stage_s.read(stage, 0);
     mode_s.read(mode, 0);
     path_s.read(path, 0);
     median_s.read(median, 0);
-    // ticks_s.read(ticks, 0);
+    nval_s.read(saved_nval, 0);
 
     d_subnet.read(detected_subnet, 0);
     d_ip.read(detected_ip, 0);
@@ -297,24 +327,57 @@ control MyIngress(inout headers hdr,
     isLfa.read(lfa, 0);
     packets_s.read(packets, 0);
     sent_s.read(sent, 0);
+    specialize_s.read(specialize, 0);
+    reset_s.read(reset, 0);
     deprio.read(dep, 0);
+    // filled_s.read(filled, 0);
 
     //SET COUNTER
     if (hdr.ipv4.isValid() && window_track.apply().hit) {
       dest_prefix_track.apply();
-      packets_s.write(0, packets + 1);
-      
-      if(hdr.ipv4.isValid() && hdr.ipv4.tos == 16 && mode != ENTROPY){
+      // packets_s.write(0, packets + 1);
+
+      if(hdr.ipv4.isValid() && hdr.ipv4.tos == 17 && mode != ANOMALY){
         reset_counters();
-        mode_s.write(0, ENTROPY);
-        mode = ENTROPY;
-        stage_s.write(0, 1);
-        stage = 1;
+        mode_s.write(0, ANOMALY);
+        mode = ANOMALY;
+        stage_s.write(0, 0);
+        stage = 0;
+        // stats_clear(COUNTER_TOPLEVEL);
+        stats_clear(COUNTER_REFINE);
+        // stats_normal_data.read(meta.stats.N, (COUNTER_REFINE * 4));
+        // stats_normal_data.read(meta.stats.Xsum, (COUNTER_REFINE * 4) + 1);
+        // stats_normal_data.read(meta.stats.Xsum_sq, (COUNTER_REFINE * 4) + 2);
+
+        // stats_data.write((COUNTER_REFINE * 4), meta.stats.N);
+        // stats_data.write((COUNTER_REFINE * 4) + 1, meta.stats.Xsum);
+        // stats_data.write((COUNTER_REFINE * 4) + 2, meta.stats.Xsum_sq);
+
+        d_subnet.write(0, 0);
+        detected_subnet = 0;
+        d_ip.write(0, 0);
+        detected_ip = 0;
         hdr.ipv4.tos = 0;
+      } else{
+        if(hdr.ipv4.isValid() && hdr.ipv4.tos == 16 && mode != ENTROPY){
+          reset_counters();
+          // stats_get_data(meta.stats, COUNTER_REFINE);
+          // stats_last_clear.write((COUNTER_REFINE * 4), meta.stats.N);
+          // stats_last_clear.write((COUNTER_REFINE * 4) + 1, meta.stats.Xsum);
+          // stats_last_clear.write((COUNTER_REFINE * 4) + 2, meta.stats.Xsum_sq);
+          
+          // stats_clear(COUNTER_REFINE);
+          mode_s.write(0, ENTROPY);
+          mode = ENTROPY;
+          stage_s.write(0, 1);
+          stage = 1;
+          hdr.ipv4.tos = 0;
+        }
       }
-      hdr.ipv4.tos = 0;
+
+      standard_metadata.egress_spec = 3;
       switch (mode) {
-        ANOMALY: {
+        ANOMALY: { 
           bit<16> tmp;
           bit<32> bucket_idx;
           next_bucket.read(bucket_idx, 0);
@@ -326,7 +389,7 @@ control MyIngress(inout headers hdr,
 
           //grab NVAL
           bit<32> nval = (bit<32>)cval * meta.stats.N;
-          last_bucket_stamp.read(last_stamp, 0);
+          // last_bucket_stamp.read(last_stamp, 0);
 
           //FLOW COUNTING
           bit<256> tmpDistinctFlowsByte;
@@ -339,8 +402,8 @@ control MyIngress(inout headers hdr,
           // Increment the packets bucket
           stats_push_freq(tmp, bucket_idx, COUNTER_TOPLEVEL);
 
-          stats_get_data(meta.stats, COUNTER_REFINE);
-          stats_freq_internal.read(tmp, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
+          // stats_get_data(meta.stats, COUNTER_TOPLEVEL);
+          // stats_freq_internal.read(tmp, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
 
           //register flows
           hash(index, HashAlgorithm.crc32,  32w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 32w8);
@@ -351,15 +414,15 @@ control MyIngress(inout headers hdr,
           tmpDistinctFlowsByte = tmpDistinctFlowsCurrent << hash_posix;
           tmpDistinctFlowsByte = tmpDistinctFlowsByte >> 255;
 
-          if(tmpDistinctFlowsByte == 0){
-            median_tick(COUNTER_REFINE);
-            stats_push_freq(tmp, bucket_idx, COUNTER_REFINE); 
-            tmpDistinctFlowsByte = 1;
-            tmpDistinctFlowsByte = tmpDistinctFlowsByte << 255;
-            tmpDistinctFlowsByte = tmpDistinctFlowsByte >> hash_posix;
-            tmpDistinctFlowsCurrent = tmpDistinctFlowsCurrent + tmpDistinctFlowsByte;
-            distinctFlows.write(index, tmpDistinctFlowsCurrent);
-          }
+          // if(tmpDistinctFlowsByte == 0){
+          //   median_tick(COUNTER_REFINE);
+          //   stats_push_freq(tmp, bucket_idx, COUNTER_REFINE); 
+          //   tmpDistinctFlowsByte = 1;
+          //   tmpDistinctFlowsByte = tmpDistinctFlowsByte << 255;
+          //   tmpDistinctFlowsByte = tmpDistinctFlowsByte >> hash_posix;
+          //   tmpDistinctFlowsCurrent = tmpDistinctFlowsCurrent + tmpDistinctFlowsByte;
+          //   distinctFlows.write(index, tmpDistinctFlowsCurrent);
+          // }
 
           if (bucket_stamp > last_stamp) {
             //fix here
@@ -374,25 +437,36 @@ control MyIngress(inout headers hdr,
 
             // Current bucket interval elapsed. Finalize the bucket and increment.
             last_bucket_stamp.write(0, bucket_stamp);
+            // bit<32> half = meta.stats.StdNX;
+            // half = half >> 1;
 
             // Single-tail: only raise an alert if the amount of traffic is high.
-            if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) { // compare Nx
-              // Exceeds defined threshold.
-              // Send digest so that the controller can populate the second counter.
-
-              drop_bucket(bucket_idx, COUNTER_TOPLEVEL);
-              if(hdr.tcp.isValid()){
-                stats_freq_internal.read(median, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
-              }     
-              
-              if(hdr.ipv4.dstAddr != 0x0a000001){
-                hdr.ipv4.tos = 16;      
-                sent_s.write(0, 1);
+            if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) { // compare Nx - more than half the buckets have been populated after last reset
+              if(nval > saved_nval){
+                nval_s.write(0, nval);
+              } 
+              sent_s.write(0, 1);
+              sent=1;
+              specialize_s.write(0, 1);
+              specialize=1;
+              if(packets == 0){
+                packets_s.write(0,cval);
               }
             }
-
+            if(sent == 1){
+              saved_nval = saved_nval >> 1;
+              if(nval < saved_nval){
+                reset_s.write(0, 1);
+                reset=1;
+                sent_s.write(0, 0);
+                // packets_s.write(0, 0);
+              }
+            }
             // Push bucket.
             bucket_idx = bucket_idx + 1;
+            // if(filled < 10){
+            //   filled_s.write(0, filled + 1);
+            // }
 
             // Wrap last bucket index around if window is full.
             if (bucket_idx == WINDOW_SIZE) {
@@ -403,6 +477,21 @@ control MyIngress(inout headers hdr,
             drop_bucket(bucket_idx, COUNTER_TOPLEVEL);
             drop_bucket(bucket_idx, COUNTER_REFINE);
             next_bucket.write(0, bucket_idx);
+          }
+          if(specialize == 1 && hdr.ipv4.dstAddr != 0x0b000001 && hdr.ipv4.dstAddr != 0x0a000001){
+            hdr.ipv4.tos = 16;      
+            // packets_s.write(0, 0);
+            specialize_s.write(0, 0);
+            standard_metadata.egress_spec = 0; //we use queue = 1 for specialization messages
+          }
+
+          if(reset == 1){
+            if(hdr.ipv4.dstAddr != 0x0b000001 && hdr.ipv4.dstAddr != 0x0a000001){
+              hdr.ipv4.tos = 17;
+              nval_s.write(0, 0);
+              reset_s.write(0, 0);
+              standard_metadata.egress_spec = 0; //we use queue = 1 for specialization messages
+            }
           }
         }
         SYN: { 
@@ -436,11 +525,11 @@ control MyIngress(inout headers hdr,
               bit<48> ts_1;
 
               // Identify the heavy flow destination.
-              if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) {
+              if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX)) {
                 if(stage == 1){
                   stage_s.write(0, 2);
-                  stats_clear(COUNTER_TOPLEVEL);
                   reset_counters();
+                  // stats_clear(COUNTER_REFINE);
                   subnetStart = (bit<16>) 0x0a01 ++ (bit<8>) (meta.counter_value);
                   subnet = subnetStart ++ (bit<8>) 0;
                   d_subnet.write(0, subnet);  
@@ -506,24 +595,40 @@ control MyIngress(inout headers hdr,
             stats_get_data(meta.stats, COUNTER_REFINE);
 
             bit<32> nval = (bit<32>)tmp * meta.stats.N;
+            
 
             // Identify the heavy flow destination.
-            if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) {
-              if(stage == 1){
+            // if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX)) {
+            if(stage == 1){
+              // bit<32> half = meta.stats.StdNX;
+              // half = half >> 1;
+              
+              // if (nval * 10 > meta.stats.Xsum * 10 + (25 * meta.stats.StdNX)) {
+              if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX)) {
                 stage_s.write(0, 2);
-                stats_clear(COUNTER_REFINE);
+                stage=2;
                 reset_counters();
+                stats_clear(COUNTER_REFINE);
                 subnetStart = hdr.ipv4.dstAddr[31:8];
                 subnet = subnetStart ++ (bit<8>) 0;
                 d_subnet.write(0, subnet);    
-              } else if(stage == 2){
+              }
+            } else if(stage == 2){
+              if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX)) {
                 subnet = hdr.ipv4.dstAddr >> 8;
                 subnet = subnet << 8;
                 if(subnet == detected_subnet && detected_ip == 0){
                   d_ip.write(0, meta.counter_value+2);
                 }
               }
-            } 
+            }
+            // } 
+            // if(stage == 1){
+            //   if (bucket_stamp > last_stamp){
+            //     reset_counters();
+            //     last_bucket_stamp.write(0, bucket_stamp);
+            //   }
+            // }
           }
         }
         LFA: { 
@@ -653,10 +758,10 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 control MyDeparser(packet_out packet, in headers hdr) 
 {
   apply {
-    packet.emit(hdr.p2p);
-    packet.emit(hdr.ipv4);
-    packet.emit(hdr.tcp);
-    packet.emit(hdr.udp);
+    packet.emit(hdr);
+    // packet.emit(hdr.ipv4);
+    // packet.emit(hdr.tcp);
+    // packet.emit(hdr.udp);
   }
 }
 

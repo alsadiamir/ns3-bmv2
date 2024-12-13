@@ -121,8 +121,8 @@ namespace ns3 {
       std_meta.packet_length = packet->GetSize ();
       Ptr<Packet> new_packet = m_p4Pipe->process_pipeline(packet, std_meta, 0, 0);
       bool result = false;
-      if(m_deprioritizationEnabled == true) {
-        uint16_t priority = std_meta.egress_spec; // Dummy logic for assigning priority
+      uint16_t priority = std_meta.egress_spec; // Dummy logic for assigning priority
+      if(m_deprioritizationEnabled == true) {       
         switch (priority)
         {
             case 0:
@@ -161,11 +161,19 @@ namespace ns3 {
         return result;
       }               
       else {       
-        if(std_meta.egress_spec == 511) {
+        if(priority == 511) {
             std::cout << "Dropped packet because P4 said so!" << std::endl;
             return false;
-          } 
-        result = m_priorityQueue1->Enqueue (new_packet);
+        } else if (priority == 0){
+          result = m_priorityQueue1->Enqueue (new_packet);
+        } else{
+          result = m_priorityQueue2->Enqueue (new_packet);
+        }
+        // if(m_priorityQueue1->GetNPackets() >= m_maxQueueSize){
+        //   LogOnFile(priority, std_meta.instance_type, "[ENQUEUE]", true);
+        //   return false;
+        // }
+        // result = m_priorityQueue1->Enqueue (new_packet);
         return result;
       }
       return false;
