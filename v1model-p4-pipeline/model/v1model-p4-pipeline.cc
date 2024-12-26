@@ -261,6 +261,7 @@ namespace ns3 {
 
     uint32_t protocol = phv->get_field("ipv4.protocol").get_uint();
     std_meta.instance_type = protocol;
+    std_meta.priority = priority;
 
     return get_ns3_packet(std::move(packet));
   }

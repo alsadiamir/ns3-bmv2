@@ -106,6 +106,27 @@ void SetupBucketSize(std::string port, std::string bucketSize){
     std::system(cmd.c_str());
 }
 
+void SetupPacketsDelay(std::string port, std::string packetsDelay){
+    std::string cmd = "echo \"register_write delay_s 0 \""+packetsDelay+" | simple_switch_CLI --thrift-port "+port;
+    std::system(cmd.c_str());
+}
+
+void ResetDebugStat4File(std::string log_file){
+    std::ofstream outputFile(log_file, std::ios::out);
+}
+
+void PrintDebugStat4(std::string port, std::string log_file){
+    std::string cmd = "echo \"register_read spike_debug_s\" | simple_switch_CLI --thrift-port "+port+" > " + log_file;
+    std::system(cmd.c_str());
+    cmd = "echo \"register_read d1_debug_s\" | simple_switch_CLI --thrift-port "+port+" >> " + log_file;
+    std::system(cmd.c_str());
+    cmd = "echo \"register_read d2_debug_s\" | simple_switch_CLI --thrift-port "+port+" >> " + log_file;
+    std::system(cmd.c_str());
+    cmd = "echo \"register_read fp_s\" | simple_switch_CLI --thrift-port "+port+" >> " + log_file;
+    std::system(cmd.c_str());
+    // Simulator::Schedule(Seconds(0.1), &DebugStat4, port, log_file);
+}
+
 int main(int argc, char *argv[])
 {
     Time::SetResolution (Time::NS);
@@ -114,6 +135,7 @@ int main(int argc, char *argv[])
     std::string suffix = "fifo";
     std::string bottleneck = "100Mbps";
     std::string bucketSize = "20";
+    std::string packetsDelay = "0";
     bool p4Enabled = false;
     bool deprioEnabled = false;
     bool dropEnabled = false;
@@ -130,6 +152,7 @@ int main(int argc, char *argv[])
     cmd.AddValue ("dosEnabled", "Enable DoS Attack", dosEnabled);
     cmd.AddValue ("lfaEnabled", "Enable Link Flooding Attack", lfaEnabled);
     cmd.AddValue ("bucketSize", "Bucket size (2 ^ bucketSize microseconds buckets)", bucketSize);
+    cmd.AddValue ("packetsDelay", "Start drill-down after this number of packets", packetsDelay);
     cmd.Parse (argc, argv);
 
 
@@ -245,6 +268,7 @@ int main(int argc, char *argv[])
     NS_LOG_INFO ("Configure Tracing."); //Dummy P4 switch for reproducibility
     Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
     customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/stat4_pwd/stat4_pwd.json", "src/traffic-control/examples/p4-src/stat4_pwd/anomaly.txt");
+    customQueue->SetOutPath(outPcap+"stat4debug9090.txt");
     Ptr<PointToPointNetDevice> p2pDevice = r1Device->GetObject<PointToPointNetDevice> ();
     // Simulator::Schedule(Seconds(0), &DebugStat4, "9090", outPcap+"/stat4debug9090.log");
     Simulator::Schedule(Seconds(0), &SetupBucketSize, "9090", bucketSize);
@@ -269,10 +293,14 @@ int main(int argc, char *argv[])
                 suffix = "stat4-drop";
             }   
             customQueue2->CreateP4Pipe (p4file, file);
-            // customQueue2->SetOutPath(outPcap+"/second_sw.txt");
+            customQueue2->SetOutPath(outPcap+"stat4debug9091.txt");
             Ptr<PointToPointNetDevice> p2pDevice2 = r2Device->GetObject<PointToPointNetDevice> ();
             // Simulator::Schedule(Seconds(0), &DebugStat4, "9091", outPcap+"/stat4debug9091.log");
             Simulator::Schedule(Seconds(0), &SetupBucketSize, "9091", bucketSize);
+            if(packetsDelay != "0"){
+                // NS_LOG_INFO ("Packets Delay Enabled."+packetsDelay);
+                Simulator::Schedule(Seconds(0), &SetupPacketsDelay, "9091", packetsDelay);
+            }
             p2pDevice2->SetQueue(customQueue2);
         } else {
             NS_LOG_INFO ("Accturbo Enabled.");
@@ -285,10 +313,10 @@ int main(int argc, char *argv[])
             customQueue->CreateP4Pipe (p4file, file);
             customQueue->SetAttribute("MaxQueueSize", UintegerValue(1));
             customQueue->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
-            customQueue->SetOutPath(outPcap+"/second_sw.txt");
+            customQueue->SetOutPath(outPcap+"second_sw.txt");
             Simulator::Schedule(Seconds(0), &UpdateCluster);
             p2pDevice->SetQueue(customQueue);
-            suffix = "accturbobad";
+            suffix = "accturbo";
         }
     }
 
@@ -397,11 +425,16 @@ int main(int argc, char *argv[])
     // Enable routing globally
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
+    Simulator::Schedule(Seconds(0), &ResetDebugStat4File, outPcap+"stat4debug9090.log");
+    Simulator::Schedule(Seconds(0), &ResetDebugStat4File, outPcap+"stat4debug9091.log");
+    Simulator::Schedule(Seconds(130), &PrintDebugStat4, "9090", outPcap+"stat4debug9090.log");
+    Simulator::Schedule(Seconds(130), &PrintDebugStat4, "9091", outPcap+"stat4debug9091.log");
 
 
     // Run the simulation
     Simulator::Stop(Seconds(140));
     Simulator::Run();
+
     Simulator::Destroy();
 
     return 0;

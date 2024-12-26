@@ -67,6 +67,7 @@ namespace ns3 {
 
     /// Get the deprioritization enabled flag
     bool GetDeprioritizationEnabled (void) const;
+    bool GetLogEnabled (void) const;
 
     /// Set the deprioritization enabled flag
     void SetDeprioritizationEnabled (bool deprioritizationEnabled);
@@ -76,6 +77,8 @@ namespace ns3 {
     void SetMaxQueueSize (uint32_t maxQueueSize);
     void SetMinThreshold (uint32_t minThreshold);
     void SetMaxThreshold (uint32_t maxThreshold);
+    void SetLogEnabled (bool logEnabled);
+
 
     virtual bool Enqueue (Ptr<Packet> packet) override
     {
@@ -90,28 +93,41 @@ namespace ns3 {
     void
     LogOnFile (uint32_t priority, uint32_t protocol, std::string phase, bool dropped = false)
     {
-      std::ofstream m_outputFile(m_outPath, std::ios::app);  // Open file in append mode
-      std::string proto = "IPv4";
-      std::string msgStart = "Enqueued";
-      if (protocol == 17) {
-        proto = "UDP"; 
-      } else if (protocol == 6) {
-        proto = "TCP";
-      }
-
-      if (m_outputFile.is_open()) {
-        if(dropped) {
-          m_outputFile << phase << " Dropped packet with protocol: " << proto << std::endl;
-        } else {
-          if (phase == "[DEQUEUE]"){
-            msgStart = "Dequeued";
-          }
-          m_outputFile << phase << " " << msgStart << " packet in (prio" << priority << ") with protocol: " << proto << std::endl;
-          m_outputFile << "Time:" << Simulator::Now().GetSeconds() << " QUEUE (prio0): " << m_priorityQueue1->GetNPackets() << " QUEUE (prio1): " << m_priorityQueue2->GetNPackets() << " QUEUE (prio2): " << m_priorityQueue3->GetNPackets() << " QUEUE (prio3): " << m_priorityQueue4->GetNPackets() << std::endl;
-          m_outputFile.close();  // Close file
+      if(m_logEnabled == false) {
+        return;
+      } else{
+        std::ofstream m_outputFile(m_outPath, std::ios::app);  // Open file in append mode
+        std::string proto = "IPv4";
+        std::string msgStart = "Enqueued";
+        if (protocol == 17) {
+          proto = "UDP"; 
+        } else if (protocol == 6) {
+          proto = "TCP";
         }
+
+        if (m_outputFile.is_open()) {
+          if(dropped) {
+            m_outputFile << phase << " Dropped packet with protocol: " << proto << std::endl;
+          } else {
+            if (phase == "[DEQUEUE]"){
+              msgStart = "Dequeued";
+            }
+            m_outputFile << phase << " " << msgStart << " packet in (prio" << priority << ") with protocol: " << proto << std::endl;
+            m_outputFile << "Time:" << Simulator::Now().GetSeconds() << " QUEUE (prio0): " << m_priorityQueue1->GetNPackets() << " QUEUE (prio1): " << m_priorityQueue2->GetNPackets() << " QUEUE (prio2): " << m_priorityQueue3->GetNPackets() << " QUEUE (prio3): " << m_priorityQueue4->GetNPackets() << std::endl;
+            m_outputFile.close();  // Close file
+          }
+        }
+        m_outputFile.close();  // Close file
       }
-      m_outputFile.close();  // Close file
+    }
+
+    void DebugStat4(std::string port, std::string log_file, std::string msg){
+      std::ofstream outputFile(log_file, std::ios::app);  // Open file in append mode
+      if (outputFile.is_open()) {
+        outputFile << msg << Simulator::Now().GetSeconds() << std::endl;
+      }
+      std::string cmd = "echo \"register_read tmp_stats_freq_internal\" | simple_switch_CLI --thrift-port "+port+" >> " + log_file;
+      std::system(cmd.c_str());
     }
 
     virtual bool DoEnqueue (Ptr<Packet> packet)
@@ -122,7 +138,17 @@ namespace ns3 {
       Ptr<Packet> new_packet = m_p4Pipe->process_pipeline(packet, std_meta, 0, 0);
       bool result = false;
       uint16_t priority = std_meta.egress_spec; // Dummy logic for assigning priority
-      if(m_deprioritizationEnabled == true) {       
+      uint16_t spec = std_meta.priority;
+      if(spec == 4){
+        DebugStat4("9090", m_outPath, "Spike detected at: ");
+      } 
+      if(spec == 5){
+        DebugStat4("9091", m_outPath, "First drill down at: ");
+      }  
+      if(spec == 6){
+        DebugStat4("9091", m_outPath, "Second drill down at: ");
+      }    
+      if(m_deprioritizationEnabled == true) {   
         switch (priority)
         {
             case 0:
@@ -162,7 +188,7 @@ namespace ns3 {
       }               
       else {       
         if(priority == 511) {
-            std::cout << "Dropped packet because P4 said so!" << std::endl;
+            // std::cout << "Dropped packet because P4 said so!" << std::endl;
             return false;
         } else if (priority == 0){
           result = m_priorityQueue1->Enqueue (new_packet);
@@ -265,6 +291,7 @@ namespace ns3 {
       int64_t m_startingTime;
       std::list<std::pair<Ptr<Packet>,uint8_t>> m_queue;  // List of packets and their priority
       bool m_deprioritizationEnabled = false;  //!< Enable deprioritization of packets
+      bool m_logEnabled = false;  // Enable logging
       uint32_t m_minThreshold;  // Minimum threshold for RED
       uint32_t m_maxThreshold;  // Maximum threshold for RED / 4
       uint32_t m_maxQueueSize;  // Maximum queue size

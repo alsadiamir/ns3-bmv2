@@ -43,7 +43,9 @@ namespace ns3 {
       .AddAttribute ( "MinThreshold", "The minimum threshold for the queue",
                     UintegerValue (70), MakeUintegerAccessor (&V1ModelP4Queue::SetMinThreshold), MakeUintegerChecker<uint32_t> ())
       .AddAttribute ( "MaxThreshold", "The maximum threshold for the queue",
-                    UintegerValue (90), MakeUintegerAccessor (&V1ModelP4Queue::SetMaxThreshold), MakeUintegerChecker<uint32_t> ());
+                    UintegerValue (90), MakeUintegerAccessor (&V1ModelP4Queue::SetMaxThreshold), MakeUintegerChecker<uint32_t> ())
+      .AddAttribute ( "LogEnabled", "Enable logging of queue operations",
+                    BooleanValue (false), MakeBooleanAccessor (&V1ModelP4Queue::GetLogEnabled, &V1ModelP4Queue::SetLogEnabled), MakeBooleanChecker ());
     return tid;
   }
 
@@ -127,16 +129,29 @@ namespace ns3 {
   void
   V1ModelP4Queue::SetOutPath (std::string outPath)
   {
-    std::ofstream outputFile(outPath, std::ios::trunc);
+    std::ofstream outputFile(outPath, std::ios::out);
 
     // Check if the file was successfully opened
     if (!outputFile) {
         std::cerr << "Error opening output file!" << std::endl;
     }
     else{
+      outputFile << std::endl;
       m_outPath = outPath;
     }
     
+  }
+
+  bool
+  V1ModelP4Queue::GetLogEnabled (void) const
+  {
+    return m_logEnabled;
+  }
+
+  void
+  V1ModelP4Queue::SetLogEnabled (bool enabled)
+  {
+    m_logEnabled = enabled;
   }
 
 } // namespace ns3
