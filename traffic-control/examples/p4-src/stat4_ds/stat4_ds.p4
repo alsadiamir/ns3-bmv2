@@ -25,12 +25,10 @@
 // In microseconds: 1048576us ~ 1sec.
 // 10 windows = 10sec.
 // 2-standard deviation from mean is considered anomalous.
-// #define BUCKET_SIZE 15
+
 #define WINDOW_SIZE 10
 #define SPLIT_SIZE 5
 #define STDEV_RANGE 2
-#define STDEV_RANGE_REFINEMENT 2
-#define SRC_ATK_PORT 1501
 
 // Counter indices.
 #define COUNTER_TOPLEVEL  0
@@ -47,6 +45,8 @@
 #define PROTO_UDP 17
 #define PROTO_EXPERIMENTAL 253
 #define PROTO_STAGE 254
+#define HASH_SEED_1 32w12345
+#define HASH_SEED_2 32w67890
 
 // MODES
 #define ANOMALY 0 // we track packets and median
@@ -125,11 +125,13 @@ control MyIngress(inout headers hdr,
   register<bit<8>>(1)   stage_s;
 
   register<bit<16>>(2)  median_s;
+  register<bit<32>>(1)  index_median_s;
   register<bit<32>>(1)  d_subnet;
   register<bit<32>>(1)  d_ip;
   register<bit<256>>(8) distinctFlows;
   register<bit<1>>(1) isLfa;
   register<bit<8>>(1) mode_s;
+  register<bit<8>>(1) stat_s;
   register<bit<8>>(1) path_s;
 
   register<bit<8>>(1)  counter_value_s;
@@ -138,11 +140,13 @@ control MyIngress(inout headers hdr,
   register<bit<1>>(1)  specialize_s;
   register<bit<32>>(1) packets_s;
   register<bit<32>>(1) attack_packets_s;
-  register<bit<32>>(1) nval_s;
+  register<bit<32>>(1) nval_packets_s;
+  register<bit<32>>(1) nval_flows_s;
+  // register<bit<32>>(1) nval_flows_s;
   register<bit<8>>(1) bucket_size_s;
   register<bit<32>>(1) delay_s;
   register<bit<1>>(1) deprio; 
-  register<bit<32>>(4) spike_debug_s;
+  register<bit<32>>(8) spike_debug_s;
   register<bit<32>>(4) d1_debug_s;
   register<bit<32>>(4) d2_debug_s;
   register<bit<32>>(1) spike_index_anomaly_s;
@@ -176,37 +180,32 @@ control MyIngress(inout headers hdr,
     default_action = NoAction;
   }
 
-  table entropy_track {
-    key = {
-      hdr.ipv4.dstAddr: lpm;
-    }
-    actions = {
-      track_time;
-      NoAction;
-    }
-    size = 16;
-    default_action = NoAction;
-  }
+  // table entropy_track {
+  //   key = {
+  //     hdr.ipv4.dstAddr: lpm;
+  //   }
+  //   actions = {
+  //     track_time;
+  //     NoAction;
+  //   }
+  //   size = 16;
+  //   default_action = NoAction;
+  // }
 
-  table syn_track {
-    key = {
-      hdr.ipv4.dstAddr: lpm;
-    }
-    actions = {
-      track_time;
-      NoAction;
-    }
-    size = 16;
-    default_action = NoAction;
-  }
+  // table syn_track {
+  //   key = {
+  //     hdr.ipv4.dstAddr: lpm;
+  //   }
+  //   actions = {
+  //     track_time;
+  //     NoAction;
+  //   }
+  //   size = 16;
+  //   default_action = NoAction;
+  // }
 
   action set_tracked_subnet() {
-    bit<32> ip_byte_selected;
-    ip_byte_selected = hdr.ipv4.dstAddr; 
-    ip_byte_selected = ip_byte_selected >> 8;
-    ip_byte_selected = ip_byte_selected << 24;
-    ip_byte_selected = ip_byte_selected >> 24;
-    meta.counter_value = ip_byte_selected; 
+    meta.counter_value = (bit<32>) hdr.ipv4.dstAddr[15:8]; 
   }
 
   action set_tracked_ip() {
@@ -225,31 +224,29 @@ control MyIngress(inout headers hdr,
     }    
   }
 
-  action reset_counters() {
-
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE), 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 1, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 2, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 3, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 4, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 5, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 6, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 7, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 8, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 9, 0);
-    stats_freq_internal.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 10, 0);
-  
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE), 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 1, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 2, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 3, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 4, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 5, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 6, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 7, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 8, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 9, 0);
-    stats_last_clear.write((COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + 10, 0);
+  action reset_counters(bit<32> idx) { 
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE), 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 1, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 2, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 3, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 4, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 5, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 6, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 7, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 8, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 9, 0);
+    stats_freq_internal.write((idx * STAT_FREQ_COUNTER_SIZE) + 10, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE), 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 1, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 2, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 3, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 4, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 5, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 6, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 7, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 8, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 9, 0);
+    stats_last_clear.write((idx * STAT_FREQ_COUNTER_SIZE) + 10, 0);
   }
 
   action hash_subnet(bit<32> h_sub) {
@@ -308,7 +305,10 @@ control MyIngress(inout headers hdr,
 
     bit<8> stage;
     bit<8> mode;
-    bit<16> median;
+    bit<8> stat;
+    bit<16> median1;
+    bit<16> median2;
+    bit<32> index_median;
     bit<16> tmpMedian;
     bit<24> subnetStart;
     bit<32> subnet;
@@ -335,20 +335,25 @@ control MyIngress(inout headers hdr,
     bit<1> dep;
     bit<9> egress_prio; 
     bit<32> saved_nval;
+    bit<32> saved_flows_nval;
     bit<32> median_tmp;
     bit<8> bucket_size;
     bit<32> delay;
     bit<32> attack_packets;
 
     bit<32> spike_index_anomaly;
+    // bit<32> spike_index_anomaly_flows;
     bit<32> spike_index_entropy;
     bit<32> spike_debug;
     bit<32> d1_debug;
     bit<32> d2_debug;
     bit<32> fp;
+    bit<32> bucket_idx;
 
+    next_bucket.read(bucket_idx, 0);
     spike_index_anomaly_s.read(spike_index_anomaly, 0);
     spike_debug_s.read(spike_debug, spike_index_anomaly);
+    // spike_index_anomaly_flows_s.read(spike_index_anomaly_flows, 0);
     spike_index_entropy_s.read(spike_index_entropy, 0);
     d1_debug_s.read(d1_debug, spike_index_entropy);
     d2_debug_s.read(d2_debug, spike_index_entropy);
@@ -359,9 +364,13 @@ control MyIngress(inout headers hdr,
     bucket_stamp = standard_metadata.ingress_global_timestamp >> bucket_size;
     stage_s.read(stage, 0);
     mode_s.read(mode, 0);
+    stat_s.read(stat, 0);
     path_s.read(path, 0);
-    median_s.read(median, 0);
-    nval_s.read(saved_nval, 0);
+    median_s.read(median1, 0);
+    median_s.read(median2, 1);
+    index_median_s.read(index_median, 0);
+    nval_packets_s.read(saved_nval, 0);
+    nval_flows_s.read(saved_flows_nval, 0);
 
     d_subnet.read(detected_subnet, 0);
     d_ip.read(detected_ip, 0);
@@ -384,15 +393,16 @@ control MyIngress(inout headers hdr,
     //SET COUNTER
     if (hdr.ipv4.isValid() && window_track.apply().hit) {
       dest_prefix_track.apply();
-      // packets_s.write(0, packets + 1);
 
-      if(hdr.ipv4.isValid() && hdr.ipv4.tos == 17 && mode != ANOMALY){ //reset stat4 - spike ended
-        reset_counters();
+      if(hdr.ipv4.tos == 17 && mode != ANOMALY){ //reset stat4 - spike ended
+        reset_counters(COUNTER_TOPLEVEL);
+        // reset_counters(COUNTER_REFINE); 
         mode_s.write(0, ANOMALY);
         mode = ANOMALY;
         stage_s.write(0, 0);
         stage = 0;
-        stats_clear(COUNTER_REFINE);
+        stats_clear(COUNTER_TOPLEVEL);
+        // stats_clear(COUNTER_REFINE);
 
         d_subnet.write(0, 0);
         detected_subnet = 0;
@@ -401,13 +411,15 @@ control MyIngress(inout headers hdr,
         hdr.ipv4.tos = 0;
         packets_s.write(0, 0);
         attack_packets_s.write(0, 0);
+        isLfa.write(0, 0);
         if(spike_index_entropy < 3){
           spike_index_entropy = spike_index_entropy + 1;
           spike_index_entropy_s.write(0, spike_index_entropy);
         } 
       } else{
-        if(hdr.ipv4.isValid() && hdr.ipv4.tos == 16 && mode != ENTROPY){
-          reset_counters();
+        if(hdr.ipv4.tos == 16 && mode != ENTROPY){
+          reset_counters(COUNTER_TOPLEVEL);
+          // reset_counters(COUNTER_REFINE);
           attack_packets_s.write(0, 0);
           attack_packets = 0;
           mode_s.write(0, ENTROPY);
@@ -419,46 +431,51 @@ control MyIngress(inout headers hdr,
       }
 
       standard_metadata.egress_spec = 3;
+      bit<16> tmp;
+      bit<16> cval; //used for both flows and packets
+      bit<32> nval; //used for both flows and packets
+
       switch (mode) {
         ANOMALY: { 
-          bit<16> tmp;
-          bit<32> bucket_idx;
-          next_bucket.read(bucket_idx, 0);
+          //PACKET counting
+          //increment packets
+          stats_push_freq(tmp, bucket_idx, COUNTER_TOPLEVEL);
 
-          //grab CVAL
-          bit<16> cval;
-          read_bucket(cval, bucket_idx, COUNTER_TOPLEVEL);
-          stats_get_data(meta.stats, COUNTER_TOPLEVEL);
-
-          //grab NVAL
-          bit<32> nval = (bit<32>)cval * meta.stats.N;
-          // last_bucket_stamp.read(last_stamp, 0);
-
-          //FLOW COUNTING
-          bit<256> tmpDistinctFlowsByte;
-          bit<256> tmpDistinctFlowsByteTmp;
+          //LFA
+          //update flows
+          //FLOW counting
           bit<1> tmpDistinctFlowsBit;
+          bit<256> tmpDistinctFlowsByteTmp;
+          bit<256> tmpDistinctFlowsByte;
           bit<256> tmpDistinctFlowsCurrent;
           bit<8> hash_posix;
           bit<32> index;
+          bit<16> srcPort = 0;
+          bit<16> dstPort = 0;
 
-          // Increment the packets bucket
-          stats_push_freq(tmp, bucket_idx, COUNTER_TOPLEVEL);
-
-          // stats_get_data(meta.stats, COUNTER_TOPLEVEL);
-          // stats_freq_internal.read(tmp, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
-
+          if(hdr.udp.isValid()){
+            srcPort = hdr.udp.srcPort;
+            dstPort = hdr.udp.dstPort;
+          } else{
+            if(hdr.tcp.isValid()){
+              srcPort = hdr.tcp.srcPort;
+              dstPort = hdr.tcp.dstPort;
+            }
+          }
+          
           //register flows
-          hash(index, HashAlgorithm.crc32,  32w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 32w8);
+          hash(index, HashAlgorithm.crc32, HASH_SEED_1, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, srcPort, dstPort}, 32w8);
           //hash and then put to data structure
-          hash(hash_posix, HashAlgorithm.crc32, 32w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 32w256);
+          hash(hash_posix, HashAlgorithm.crc32, HASH_SEED_2, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, srcPort, dstPort}, 32w256);
 
           distinctFlows.read(tmpDistinctFlowsCurrent, index);        
           tmpDistinctFlowsByte = tmpDistinctFlowsCurrent << hash_posix;
           tmpDistinctFlowsByte = tmpDistinctFlowsByte >> 255;
+          // tmpDistinctFlowsBit = tmpDistinctFlowsCurrent[hash_posix+1:hash_posix];
 
           if(tmpDistinctFlowsByte == 0){
             median_tick(COUNTER_REFINE);
+            //increment flows
             stats_push_freq(tmp, bucket_idx, COUNTER_REFINE); 
             tmpDistinctFlowsByte = 1;
             tmpDistinctFlowsByte = tmpDistinctFlowsByte << 255;
@@ -466,9 +483,12 @@ control MyIngress(inout headers hdr,
             tmpDistinctFlowsCurrent = tmpDistinctFlowsCurrent + tmpDistinctFlowsByte;
             distinctFlows.write(index, tmpDistinctFlowsCurrent);
           }
-
-          if (bucket_stamp > last_stamp) {
-            //fix here
+          //END LFA
+          
+          if(bucket_stamp > last_stamp) {
+            last_bucket_stamp.write(0, bucket_stamp);
+            
+            //LFA
             distinctFlows.write(0,0);
             distinctFlows.write(1,0);
             distinctFlows.write(2,0);
@@ -476,15 +496,44 @@ control MyIngress(inout headers hdr,
             distinctFlows.write(4,0);
             distinctFlows.write(5,0);
             distinctFlows.write(6,0);
-            distinctFlows.write(7,0);            
+            distinctFlows.write(7,0);
 
-            // Current bucket interval elapsed. Finalize the bucket and increment.
-            last_bucket_stamp.write(0, bucket_stamp);
+            //grab CVAL
+            read_bucket(cval, bucket_idx, COUNTER_REFINE);
+            stats_get_data(meta.stats, COUNTER_REFINE);
 
-            // Single-tail: only raise an alert if the amount of traffic is high.
-            if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) { // compare Nx - more than half the buckets have been populated after last reset
-              if(nval > saved_nval){
-                nval_s.write(0, nval);
+            //compute NVAL
+            nval = (bit<32>)cval * meta.stats.N;
+            stats_freq_internal.read(tmpMedian, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
+
+            // if (median1 > 0 && median2 > 0 && median2 > median1 && tmpMedian > median2 && index_median == 0 && meta.stats.N == 10) { // compare Nx
+            if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) { // compare Nx
+              if(nval > saved_flows_nval){ //packet spike update
+                nval_flows_s.write(0, nval);
+              } 
+              standard_metadata.priority = 7;
+              // isLfa.write(0, 1);
+            }
+            
+            // Ensure the new bucket is clean.
+            
+            median_s.write(index_median, tmpMedian);  
+            index_median = index_median + 1;
+            if(index_median == 2){
+              index_median = 0;
+            } 
+            index_median_s.write(0, index_median); 
+            //END LFA
+
+            //check packets
+            //grab CVAL
+            read_bucket(cval, bucket_idx, COUNTER_TOPLEVEL);
+            stats_get_data(meta.stats, COUNTER_TOPLEVEL);
+            //compute NVAL
+            nval = (bit<32>)cval * meta.stats.N;
+            if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) { // compare Nx
+              if(nval > saved_nval){ //packet spike update
+                nval_packets_s.write(0, nval);
               } 
               sent_s.write(0, 1);
               sent=1;
@@ -505,6 +554,7 @@ control MyIngress(inout headers hdr,
                 }
               }
             }
+
             if(sent == 1){
               saved_nval = saved_nval >> 1;
               if(nval < saved_nval){
@@ -512,14 +562,10 @@ control MyIngress(inout headers hdr,
                 reset=1;
                 sent_s.write(0, 0);
                 attack_packets_s.write(0, 0);
-                // packets_s.write(0, 0);
               }
             }
             // Push bucket.
             bucket_idx = bucket_idx + 1;
-            // if(filled < 10){
-            //   filled_s.write(0, filled + 1);
-            // }
 
             // Wrap last bucket index around if window is full.
             if (bucket_idx == WINDOW_SIZE) {
@@ -528,12 +574,14 @@ control MyIngress(inout headers hdr,
             
             // Ensure the new bucket is clean.
             drop_bucket(bucket_idx, COUNTER_TOPLEVEL);
+            //LFA
             drop_bucket(bucket_idx, COUNTER_REFINE);
+            //END LFA
             next_bucket.write(0, bucket_idx);
           }
+
           if(specialize == 1 && hdr.ipv4.dstAddr != 0x0b000001 && hdr.ipv4.dstAddr != 0x0a000001){
             hdr.ipv4.tos = 16;      
-            // packets_s.write(0, 0);
             specialize_s.write(0, 0);
             standard_metadata.egress_spec = 0; //we use queue = 1 for specialization messages
           }
@@ -541,7 +589,8 @@ control MyIngress(inout headers hdr,
           if(reset == 1){
             if(hdr.ipv4.dstAddr != 0x0b000001 && hdr.ipv4.dstAddr != 0x0a000001){
               hdr.ipv4.tos = 17;
-              nval_s.write(0, 0);
+              nval_packets_s.write(0, 0);
+              isLfa.write(0, 0);
               reset_s.write(0, 0);
               standard_metadata.egress_spec = 0; //we use queue = 1 for specialization messages
               if(spike_index_anomaly < 3){
@@ -549,59 +598,6 @@ control MyIngress(inout headers hdr,
               }
             }
           }
-        }
-        SYN: { 
-            subnet = hdr.ipv4.dstAddr >> 8;
-            subnet = subnet << 8;
-            ip = hdr.ipv4.dstAddr << 24;
-            ip = ip >> 24;
-            
-            if(subnet == detected_subnet && detected_ip == ip){
-              drop();
-            }
-            switch (stage) {
-              1: { //track subnets - 1
-                set_tracked_subnet();
-              }
-              2: { //track ips - 2
-                set_tracked_ip();
-              }
-              default: { 
-                //do nothing
-              }
-            }
-            bit<16> tmp;
-            if (meta.counter_value != 0xdeadbeef && hdr.tcp.isValid() && hdr.tcp.flags == 16 && syn_track.apply().hit) {
-
-              stats_push_freq(tmp, meta.counter_value, COUNTER_REFINE);
-              stats_get_data(meta.stats, COUNTER_REFINE);
-
-              bit<32> nval = (bit<32>)tmp * meta.stats.N;
-              bit<48> ts_0;
-              bit<48> ts_1;
-
-              // Identify the heavy flow destination.
-              if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX)) {
-                if(stage == 1){
-                  stage_s.write(0, 2);
-                  reset_counters();
-                  // stats_clear(COUNTER_REFINE);
-                  subnetStart = (bit<16>) 0x0a01 ++ (bit<8>) (meta.counter_value);
-                  subnet = subnetStart ++ (bit<8>) 0;
-                  d_subnet.write(0, subnet);  
-                  // if(detected_subnet == 0){
-                  //   set_debug(SYN, meta.counter_value, subnet, 0, 0);
-                  // }      
-                } else if(stage == 2){
-                  subnet = hdr.ipv4.dstAddr >> 8;
-                  subnet = subnet << 8;
-                  if(subnet == detected_subnet && detected_ip == 0){
-                    d_ip.write(0, meta.counter_value);
-                    // set_debug(SYN, meta.counter_value, subnet, meta.counter_value, 0);
-                  }
-                }
-              } 
-            } 
         }
         ENTROPY: { 
           bit<32> ip_byte_selected;
@@ -628,138 +624,74 @@ control MyIngress(inout headers hdr,
               //do nothing
             }
           }
-          // run_entropy(stage, saved_block_1);
-          bit<16> tmp;
+
           if(delay > 0){
-            packets_s.write(0, packets + 1);
+            if(stat == SYN){
+              if(hdr.tcp.isValid() && hdr.tcp.flags == 0x02){
+                packets_s.write(0, packets + 1);
+              }  
+            } else{
+              packets_s.write(0, packets + 1);
+            }            
           }
+          //keep going - check syn and normal packets
+          bit<1> track_stat = 0;
+          if(stat == SYN){
+            if(hdr.tcp.isValid() && hdr.tcp.flags == 0x02){
+              track_stat = 1;
+            }  
+          } else{
+            track_stat = 1;
+          } 
           
-          if (meta.counter_value != 0xdeadbeef && hdr.ipv4.isValid() && entropy_track.apply().hit && packets >=delay) {
-            
-            stats_push_freq(tmp, meta.counter_value, COUNTER_REFINE);
-            stats_get_data(meta.stats, COUNTER_REFINE);
-            
-            if(stage == 2){
-              meta.stats.N = 10;
-            }
+          if (meta.counter_value != 0xdeadbeef && hdr.ipv4.isValid()) {
+            //LFA
+            //update flows
+            //FLOW counting
+            bit<1> tmpDistinctFlowsBit;
+            bit<256> tmpDistinctFlowsByteTmp;
+            bit<256> tmpDistinctFlowsByte;
+            bit<256> tmpDistinctFlowsCurrent;
+            bit<8> hash_posix;
+            bit<32> index;
+            bit<16> srcPort = 0;
+            bit<16> dstPort = 0;
 
-            bit<32> nval = (bit<32>)tmp * meta.stats.N;
-            
-
-            // Identify the heavy flow destination.
-            // if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX)) {
-            if(stage == 1){
-              // bit<32> half = meta.stats.StdNX;
-              // half = half >> 1;
-              
-              // if (nval * 10 > meta.stats.Xsum * 10 + (25 * meta.stats.StdNX)) {
-              if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX)) {
-                stage_s.write(0, 2);
-                stage=2;
-                backup_counters(COUNTER_REFINE);
-                reset_counters();
-                stats_clear(COUNTER_REFINE);
-                subnetStart = hdr.ipv4.dstAddr[31:8];
-                subnet = subnetStart ++ (bit<8>) 0;
-                d_subnet.write(0, subnet); 
-                if(detected_subnet == 0){
-                  standard_metadata.priority = 5;
-                }   
-                if(hdr.udp.isValid()){
-                  if(d1_debug == 0){
-                    d1_debug_s.write(spike_index_entropy, attack_packets);
-                  }
-                } else{
-                  fp_s.write(1, fp + 1);
-                }
-                attack_packets_s.write(0, 0);
-              }
-            } else if(stage == 2){
-              if (nval > meta.stats.Xsum + (STDEV_RANGE_REFINEMENT * meta.stats.StdNX) && tmp > 100) {
-                subnet = hdr.ipv4.dstAddr >> 8;
-                subnet = subnet << 8;
-                if(subnet == detected_subnet && detected_ip == 0){
-                  d_ip.write(0, meta.counter_value+2);
-                }
-                if(detected_ip == 0){
-                  standard_metadata.priority = 6;
-                }
-                if(hdr.udp.isValid()){
-                  if(d2_debug == 0){
-                    backup_counters(COUNTER_REFINE);
-                    d2_debug_s.write(spike_index_entropy, attack_packets);
-                  }
-                } else{
-                  if(detected_ip == 0){
-                    fp_s.write(2, fp + 1);
-                  }
-                }
+            if(hdr.udp.isValid()){
+              srcPort = hdr.udp.srcPort;
+              dstPort = hdr.udp.dstPort;
+            } else{
+              if(hdr.tcp.isValid()){
+                srcPort = hdr.tcp.srcPort;
+                dstPort = hdr.tcp.dstPort;
               }
             }
-            // } 
-            // if(stage == 1){
-            //   if (bucket_stamp > last_stamp){
-            //     reset_counters();
-            //     last_bucket_stamp.write(0, bucket_stamp);
-            //   }
-            // }
-          }
-          if (dep == 1) {
-            if(subnet == detected_subnet && detected_ip == ip){
-              standard_metadata.egress_spec = 3; //malicious
-            } 
-            else{
-              // hash(egress_prio, HashAlgorithm.crc32, 9w0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr}, 9w3);
-              standard_metadata.egress_spec = 0;
-            }
 
-          } else { //default drop
-            if(subnet == detected_subnet && detected_ip == ip){
-              drop();
-            }
-          }
-        }
-        LFA: { 
-          bit<16> tmp;
-          bit<32> bucket_idx;
-          bit<1> tmpDistinctFlowsBit;
-          bit<256> tmpDistinctFlowsByte;
-          bit<256> tmpDistinctFlowsCurrent;
-          bit<8> hash_posix;
-          bit<32> index;
-          bit<32> data_offset = COUNTER_REFINE * 4;
-          bit<16> newmedian;
-          bit<16> bigmedian;
+            //register flows
+            hash(index, HashAlgorithm.crc32, HASH_SEED_1, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, srcPort, dstPort}, 32w8);
+            //hash and then put to data structure
+            hash(hash_posix, HashAlgorithm.crc32, HASH_SEED_2, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, srcPort, dstPort}, 32w256);
 
-          next_bucket.read(bucket_idx, 0);
-          last_bucket_stamp.read(last_stamp, 0);
-          median_s.read(bigmedian, 1);
-
-          if(hdr.tcp.isValid()){
-            stats_get_data(meta.stats, COUNTER_REFINE);
-            stats_freq_internal.read(newmedian, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
-
-            if(median!=0 && newmedian!=0 && 
-              newmedian > median) {
-              isLfa.write(0,1);
-              median_s.write(1, newmedian);
-            } 
-
-            distinctFlows.read(tmpDistinctFlowsCurrent, meta.index);        
-            tmpDistinctFlowsByte = tmpDistinctFlowsCurrent << (bit<8>) meta.hash_posix;
+            distinctFlows.read(tmpDistinctFlowsCurrent, index);        
+            tmpDistinctFlowsByte = tmpDistinctFlowsCurrent << hash_posix;
             tmpDistinctFlowsByte = tmpDistinctFlowsByte >> 255;
+            // tmpDistinctFlowsBit = tmpDistinctFlowsCurrent[hash_posix+1:hash_posix];
 
             if(tmpDistinctFlowsByte == 0){
               median_tick(COUNTER_REFINE);
+              //increment flows
               stats_push_freq(tmp, bucket_idx, COUNTER_REFINE); 
               tmpDistinctFlowsByte = 1;
               tmpDistinctFlowsByte = tmpDistinctFlowsByte << 255;
-              tmpDistinctFlowsByte = tmpDistinctFlowsByte >> (bit<8>) meta.hash_posix;
+              tmpDistinctFlowsByte = tmpDistinctFlowsByte >> hash_posix;
               tmpDistinctFlowsCurrent = tmpDistinctFlowsCurrent + tmpDistinctFlowsByte;
-              distinctFlows.write(meta.index, tmpDistinctFlowsCurrent);
+              distinctFlows.write(index, tmpDistinctFlowsCurrent);
             }
-            if (bucket_stamp > last_stamp) {
-              //fix here
+            //END LFA
+
+            if(bucket_stamp > last_stamp) {
+              last_bucket_stamp.write(0, bucket_stamp);
+              //LFA
               distinctFlows.write(0,0);
               distinctFlows.write(1,0);
               distinctFlows.write(2,0);
@@ -769,8 +701,32 @@ control MyIngress(inout headers hdr,
               distinctFlows.write(6,0);
               distinctFlows.write(7,0);
 
-              // Current bucket interval elapsed. Finalize the bucket and increment.
-              last_bucket_stamp.write(0, bucket_stamp);
+              //grab CVAL
+              read_bucket(cval, bucket_idx, COUNTER_REFINE);
+              stats_get_data(meta.stats, COUNTER_REFINE);
+
+              //compute NVAL
+              nval = (bit<32>)cval * meta.stats.N;
+              stats_freq_internal.read(tmpMedian, (COUNTER_REFINE * STAT_FREQ_COUNTER_SIZE) + meta.stats.Median);
+
+              // if (median1 > 0 && median2 > 0 && median2 > median1 && tmpMedian > median2 && index_median == 0 && meta.stats.N == 10) { // compare Nx
+              if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) { // compare Nx
+                if(nval > saved_flows_nval){ //packet spike update
+                  nval_flows_s.write(0, nval);
+                } 
+                standard_metadata.priority = 7;
+                isLfa.write(0, 1);
+              }
+              
+              // Ensure the new bucket is clean.
+              
+              median_s.write(index_median, tmpMedian);  
+              index_median = index_median + 1;
+              if(index_median == 2){
+                index_median = 0;
+              } 
+              index_median_s.write(0, index_median); 
+              //END LFA
 
               // Push bucket.
               bucket_idx = bucket_idx + 1;
@@ -779,14 +735,76 @@ control MyIngress(inout headers hdr,
               if (bucket_idx == WINDOW_SIZE) {
                 bucket_idx = 0;
               }
-              
-              // Ensure the new bucket is clean.
               drop_bucket(bucket_idx, COUNTER_REFINE);
-              next_bucket.write(0, bucket_idx);
-              //update rotation
-              // if(ticks<WINDOW_SIZE){
-              //   ticks_s.write(0, ticks + 1); //change mode each x ticks
-              // }
+              next_bucket.write(0, bucket_idx);          
+            }
+
+            if(packets >= delay && track_stat == 1){
+              stats_push_freq(tmp, meta.counter_value, COUNTER_TOPLEVEL);
+              stats_get_data(meta.stats, COUNTER_TOPLEVEL);
+              
+              if(stage == 2){
+                meta.stats.N = 10;
+              }
+
+              nval = (bit<32>)tmp * meta.stats.N;
+
+              if(stage == 1){
+                if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX)) {
+                  stage_s.write(0, 2);
+                  stage=2;
+                  backup_counters(COUNTER_TOPLEVEL);
+                  reset_counters(COUNTER_TOPLEVEL);
+                  stats_clear(COUNTER_TOPLEVEL);
+                  subnetStart = hdr.ipv4.dstAddr[31:8];
+                  subnet = subnetStart ++ (bit<8>) 0;
+                  d_subnet.write(0, subnet); 
+                  if(detected_subnet == 0){
+                    standard_metadata.priority = 5;
+                  }   
+                  if(hdr.udp.isValid()){
+                    if(d1_debug == 0){
+                      d1_debug_s.write(spike_index_entropy, attack_packets);
+                    }
+                  } else{
+                    fp_s.write(1, fp + 1);
+                  }
+                  attack_packets_s.write(0, 0);
+                }
+              } else if(stage == 2){
+                if (nval > meta.stats.Xsum + (STDEV_RANGE * meta.stats.StdNX) && tmp > 100) {
+                  subnet = hdr.ipv4.dstAddr >> 8;
+                  subnet = subnet << 8;
+                  if(subnet == detected_subnet && detected_ip == 0){
+                    d_ip.write(0, meta.counter_value+2);
+                  }
+                  if(detected_ip == 0){
+                    standard_metadata.priority = 6;
+                  }
+                  if(hdr.udp.isValid()){
+                    if(d2_debug == 0){
+                      backup_counters(COUNTER_TOPLEVEL);
+                      d2_debug_s.write(spike_index_entropy, attack_packets);
+                    }
+                  } else{
+                    if(detected_ip == 0){
+                      fp_s.write(2, fp + 1);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          if (dep == 1) {
+            if((subnet == detected_subnet && detected_ip == ip) || (lfa == 1 && hdr.udp.isValid())){
+              standard_metadata.egress_spec = 3; //malicious
+            } 
+            else{
+              standard_metadata.egress_spec = 0;
+            }
+          } else { //default drop
+            if((subnet == detected_subnet && detected_ip == ip) || (lfa == 1 && hdr.udp.isValid())){
+              drop();
             }
           }
         }

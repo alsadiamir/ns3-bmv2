@@ -38,7 +38,6 @@ void LogReceivedPackets(Ptr<PacketSink> sinkApp, std::ofstream &logFile, double 
     Simulator::Schedule(Seconds(interval), &LogReceivedPackets, sinkApp, std::ref(logFile), interval);
 }
 
-
 void StartFlows(NodeContainer serverNodes, NodeContainer clientNodes, Ipv4InterfaceContainer routerServerInterfaces)
 {
     // Create TCP flows from client to each server
@@ -76,7 +75,7 @@ void StartCoremeltAttack(NodeContainer serverNodes, NodeContainer clientNodes, I
     {
         for (uint32_t j = 0; j < clientNodes.GetN(); ++j)
         {
-            for (uint16_t port = startPort; port < startPort+1000; ++port)
+            for (uint16_t port = startPort; port < startPort+100; ++port)
             {
                 uint16_t p = port + 1000*(i+j); 
                 // Install PacketSink on each server (to act as TCP receiver)
@@ -89,12 +88,11 @@ void StartCoremeltAttack(NodeContainer serverNodes, NodeContainer clientNodes, I
                 // Install TCP OnOff client on the client node (to act as TCP sender)
                 // BulkSendHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), p));
 
-                UdpClientHelper clientHelper(routerServerInterfaces.GetAddress(i + 1), p);
-                // OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
-                // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-                // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-                // clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("5Kbps")));
-            
+                OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), p));
+                clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+                clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+                clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("5Kbps")));
+                        
                 ApplicationContainer clientApp = clientHelper.Install(clientNodes.Get(j));
                 clientApp.Start(Seconds(20.0));  // Start each flow with a slight delay
                 clientApp.Stop(Seconds(45.0));
@@ -122,10 +120,23 @@ void UpdateCluster(){
     Simulator::Schedule(Seconds(0.1), &UpdateCluster);
 }
 
+void SetupBucketSize(std::string port, std::string bucketSize){
+    std::string cmd = "echo \"register_write bucket_size_s 0 \""+bucketSize+" | simple_switch_CLI --thrift-port "+port;
+    std::system(cmd.c_str());
+}
+
+void SetupPacketsDelay(std::string port, std::string packetsDelay){
+    std::string cmd = "echo \"register_write delay_s 0 \""+packetsDelay+" | simple_switch_CLI --thrift-port "+port;
+    std::system(cmd.c_str());
+}
+
 int main(int argc, char *argv[])
 {
     Time::SetResolution (Time::NS);
-    Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpWestwood"));
+    // Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpWestwood"));
+    std::string outPcap = "trace-data/coremelt/";
+    std::string bucketSize = "20";
+    std::string packetsDelay = "0";
     bool p4Enabled = false;
     bool deprioEnabled = false;
     bool dropEnabled = false;
@@ -139,6 +150,8 @@ int main(int argc, char *argv[])
     cmd.AddValue ("dropEnabled", "Enable Dropping, Default FALSE", dropEnabled);
     cmd.AddValue ("accturboEnabled", "Enable AccTurbo, Default FALSE", accturboEnabled);
     cmd.AddValue ("lfaEnabled", "Enable Link Flooding Attack", lfaEnabled);
+    cmd.AddValue ("bucketSize", "Bucket size (2 ^ bucketSize microseconds buckets)", bucketSize);
+    cmd.AddValue ("packetsDelay", "Start drill-down after this number of packets", packetsDelay);
     cmd.Parse (argc, argv);
 
 
@@ -193,17 +206,17 @@ int main(int argc, char *argv[])
 
 
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("1Mbps"));
+    p2p.SetDeviceAttribute("DataRate", StringValue("10Mbps"));
     p2p.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
 
     // Setup CSMA attributes
     CsmaHelper lcsma;
-    lcsma.SetChannelAttribute("DataRate", StringValue("500Kbps"));
+    lcsma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
     lcsma.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
 
     // Setup CSMA attributes
     CsmaHelper rcsma;
-    rcsma.SetChannelAttribute("DataRate", StringValue("500Kbps"));
+    rcsma.SetChannelAttribute("DataRate", StringValue("5Mbps"));
     rcsma.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
 
     // Install CSMA devices on the nodes
@@ -253,6 +266,13 @@ int main(int argc, char *argv[])
     internet.Install(serverNodes12);
 
     if (p4Enabled){
+        suffix = "stat4-drop";
+        Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
+        customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/stat4_ds/stat4_ds.json", "src/traffic-control/examples/p4-src/stat4_ds/anomaly.txt");
+        customQueue->SetOutPath(outPcap+"stat4debug9090.txt");
+        Ptr<PointToPointNetDevice> p2pDevice = r1Device->GetObject<PointToPointNetDevice> ();
+        Simulator::Schedule(Seconds(0), &SetupBucketSize, "9090", bucketSize);
+        p2pDevice->SetQueue(customQueue);
         NS_LOG_INFO ("Configure Tracing.");
     }
 
@@ -276,41 +296,40 @@ int main(int argc, char *argv[])
     Ipv4InterfaceContainer routerServerInterfaces3 = address.Assign(routerServerDevices3);
 
     // Router and servers
-    address.SetBase("192.168.1.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("100.11.1.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces4 = address.Assign(routerServerDevices4);
 
     // Router and servers
-    address.SetBase("192.168.2.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("99.68.2.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces5 = address.Assign(routerServerDevices5);
 
     // Router and servers
-    address.SetBase("192.168.3.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("2.8.3.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces6 = address.Assign(routerServerDevices6);
 
     // Router and servers
-    address.SetBase("192.168.4.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("32.44.4.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces7 = address.Assign(routerServerDevices7);
 
     // Router and servers
-    address.SetBase("192.168.5.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("92.7.5.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces8 = address.Assign(routerServerDevices8);
 
     // Router and servers
-    address.SetBase("192.168.6.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("77.58.6.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces9 = address.Assign(routerServerDevices9);
 
     // Router and servers
-    address.SetBase("192.168.7.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("200.10.7.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces10 = address.Assign(routerServerDevices10);
 
     // Router and servers
-    address.SetBase("192.168.8.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("15.188.8.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces11 = address.Assign(routerServerDevices11);
 
     // Router and servers
-    address.SetBase("192.168.9.0", "255.255.255.0");  // Router and Server subnet
+    address.SetBase("112.11.9.0", "255.255.255.0");  // Router and Server subnet
     Ipv4InterfaceContainer routerServerInterfaces12 = address.Assign(routerServerDevices12);
-
 
 
     Ptr<Ipv4> ipv4Router = routerNode1->GetObject<Ipv4>();
@@ -339,7 +358,6 @@ int main(int argc, char *argv[])
     
     // Enable routing globally
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
-
 
 
     // Run the simulation

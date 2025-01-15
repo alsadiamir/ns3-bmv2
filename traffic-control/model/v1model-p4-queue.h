@@ -148,6 +148,9 @@ namespace ns3 {
       if(spec == 6){
         DebugStat4("9091", m_outPath, "Second drill down at: ");
       }    
+      if(spec == 7){
+        std::cout << "LFA detected at: " << Simulator::Now().GetSeconds() << std::endl;
+      } 
       if(m_deprioritizationEnabled == true) {   
         switch (priority)
         {

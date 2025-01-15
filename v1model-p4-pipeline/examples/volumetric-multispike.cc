@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <set> // Include header for std::set
 
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -20,6 +21,8 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("VolumetricMultiSpike");
 
+// Shared set to track used ports
+std::set<uint16_t> usedPorts;
 
 void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces)
 {
@@ -42,7 +45,7 @@ void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCo
     }
 }
 
-void StartDoS(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces, double start, double finish, uint16_t port, uint16_t addNum)
+void StartDoS(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces, double start, double finish, uint16_t port, uint16_t addNum, std::string datarate)
 {
     // Create TCP flows from client to each server
     // uint16_t port = 60000;
@@ -63,7 +66,7 @@ void StartDoS(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCont
     OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(addNum), port));
     clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
     clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-    clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("40Mbps")));
+    clientHelper.SetAttribute("DataRate", DataRateValue(DataRate(datarate)));
     // clientHelper.SetAttribute("PacketSize", UintegerValue(1200));  // Packet size
 
     ApplicationContainer clientApp = clientHelper.Install(clientNode);
@@ -71,9 +74,45 @@ void StartDoS(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCont
     clientApp.Stop(Seconds(finish));
 }
 
-void StartLFA(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceContainer routerServerInterfaces)
+void StartCoremeltAttack(NodeContainer serverNodes, NodeContainer clientNodes, 
+                         Ipv4InterfaceContainer routerServerInterfaces, 
+                         double start, double finish, int startPort, std::string datarate)
 {
-    //TODO: Implement LFA attack
+    // Create flows from client to each server
+    for (uint32_t i = 0; i < serverNodes.GetN(); ++i)
+    {
+        for (uint32_t j = 0; j < clientNodes.GetN(); ++j)
+        {
+            for (uint16_t offset = 0; offset < 10; ++offset)
+            {
+                // Generate a candidate port
+                uint16_t port = startPort + offset + 1000 * (i + j);
+
+                // Ensure the port is unique globally
+                while (usedPorts.find(port) != usedPorts.end()) {
+                    ++port; // Increment until unique
+                }
+                usedPorts.insert(port); // Mark the port as used
+
+                // Install PacketSink on each server (to act as receiver)
+                Address serverAddress(InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
+                PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", serverAddress);
+                ApplicationContainer serverApp = sinkHelper.Install(serverNodes.Get(i));
+                serverApp.Start(Seconds(0.0));
+                serverApp.Stop(Seconds(finish));
+
+                // Install OnOff client on the client node (to act as sender)
+                OnOffHelper clientHelper("ns3::UdpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
+                clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+                clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+                clientHelper.SetAttribute("DataRate", DataRateValue(DataRate(datarate)));
+                        
+                ApplicationContainer clientApp = clientHelper.Install(clientNodes.Get(j));
+                clientApp.Start(Seconds(start));
+                clientApp.Stop(Seconds(finish));
+            }
+        }
+    }
 }
 
 void QueueSizeTrace(Ptr<Queue<Packet>> queue) {
@@ -142,6 +181,7 @@ int main(int argc, char *argv[])
     bool accturboEnabled = false;
     bool dosEnabled = false;
     bool lfaEnabled = false;
+    bool mixedAttacksEnabled = false;
     
     CommandLine cmd;
     cmd.AddValue ("outPcap", "Simulation PCAP Destination folder", outPcap);
@@ -151,6 +191,7 @@ int main(int argc, char *argv[])
     cmd.AddValue ("accturboEnabled", "Enable AccTurbo, Default FALSE", accturboEnabled);
     cmd.AddValue ("dosEnabled", "Enable DoS Attack", dosEnabled);
     cmd.AddValue ("lfaEnabled", "Enable Link Flooding Attack", lfaEnabled);
+    cmd.AddValue ("mixedAttacksEnabled", "Enable Mixed Attacks", mixedAttacksEnabled);
     cmd.AddValue ("bucketSize", "Bucket size (2 ^ bucketSize microseconds buckets)", bucketSize);
     cmd.AddValue ("packetsDelay", "Start drill-down after this number of packets", packetsDelay);
     cmd.Parse (argc, argv);
@@ -166,7 +207,9 @@ int main(int argc, char *argv[])
     Ptr<Node> routerNode3 = CreateObject<Node> ();
     Ptr<Node> routerNode4 = CreateObject<Node> ();
     
-    NodeContainer serverNodes1, serverNodes2, serverNodes3, serverNodes4, serverNodes5, serverNodes6, serverNodes7, serverNodes8, serverNodesAtk;
+    NodeContainer clientLfaNodes, serverNodes1, serverNodes2, serverNodes3, serverNodes4, serverNodes5, serverNodes6, serverNodes7, serverNodes8, serverNodesAtk;
+    clientLfaNodes.Create(10);
+    // clientNodes.Add(clientNode);
     serverNodes1.Create(10);  // 8 Servers
     serverNodes2.Create(10);  // 8 Servers
     serverNodes3.Create(10);  // 8 Servers
@@ -177,8 +220,10 @@ int main(int argc, char *argv[])
     serverNodes8.Create(10);  // 8 Servers
     serverNodesAtk.Create(10);  // 8 Servers
 
+    // Ptr<Node> clientNode = clientNodes.Get(0);
+
     // Create a CSMA network (Client -> Router -> Servers)
-    NodeContainer routerToServers1, routerToServers2, routerToServers3, routerToServers4, routerToServers5, routerToServers6, routerToServers7, routerToServers8, routerToServersAtk;
+    NodeContainer routerToServers1, routerToServers2, routerToServers3, routerToServers4, routerToServers5, routerToServers6, routerToServers7, routerToServers8, routerToServersAtk, clientLfaToRouter;
     routerToServers1.Add(routerNode4);
     routerToServers1.Add(serverNodes1);
     routerToServers2.Add(routerNode4);
@@ -197,6 +242,8 @@ int main(int argc, char *argv[])
     routerToServers8.Add(serverNodes8);
     routerToServersAtk.Add(routerNode4);
     routerToServersAtk.Add(serverNodesAtk);
+    clientLfaToRouter.Add(clientLfaNodes);
+    clientLfaToRouter.Add(routerNode1);
 
 
     PointToPointHelper p2pc;
@@ -220,8 +267,14 @@ int main(int argc, char *argv[])
     csma.SetChannelAttribute("DataRate", StringValue("10Mbps"));
     csma.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
 
+    CsmaHelper csmalfa;
+    csmalfa.SetChannelAttribute("DataRate", StringValue("40Mbps"));
+    csmalfa.SetChannelAttribute("Delay", TimeValue(MicroSeconds(50)));
+
     // Install CSMA devices on the nodes
     NetDeviceContainer clientRouterDevices = p2pc.Install(NodeContainer(clientNode, routerNode1));
+    //fix here the client lfa wiring
+    NetDeviceContainer clientLfaRouterDevices = csmalfa.Install(clientLfaToRouter);
     NetDeviceContainer attackerRouterDevices = p2pa.Install(NodeContainer(attackerNode, routerNode1));
     NetDeviceContainer router1Router2Devices = p2p.Install(NodeContainer(routerNode1, routerNode2));
     NetDeviceContainer router2Router3Devices = p2p2.Install(NodeContainer(routerNode2, routerNode3));
@@ -248,6 +301,7 @@ int main(int argc, char *argv[])
 
     // Install Internet stack on all nodes
     InternetStackHelper internet;
+    internet.Install(clientLfaNodes);
     internet.Install(clientNode);
     internet.Install(attackerNode);
     internet.Install(routerNode1);
@@ -267,7 +321,7 @@ int main(int argc, char *argv[])
 
     NS_LOG_INFO ("Configure Tracing."); //Dummy P4 switch for reproducibility
     Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
-    customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/stat4_pwd/stat4_pwd.json", "src/traffic-control/examples/p4-src/stat4_pwd/anomaly.txt");
+    customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/stat4_ds/stat4_ds.json", "src/traffic-control/examples/p4-src/stat4_ds/anomaly.txt");
     customQueue->SetOutPath(outPcap+"stat4debug9090.txt");
     Ptr<PointToPointNetDevice> p2pDevice = r1Device->GetObject<PointToPointNetDevice> ();
     // Simulator::Schedule(Seconds(0), &DebugStat4, "9090", outPcap+"/stat4debug9090.log");
@@ -278,18 +332,18 @@ int main(int argc, char *argv[])
         if (accturboEnabled == false){            
       
             Ptr<V1ModelP4Queue> customQueue2 = CreateObject<V1ModelP4Queue> ();
-            std::string p4file = "src/traffic-control/examples/p4-src/stat4_pwd/stat4_pwd.json";
-            std::string file = "src/traffic-control/examples/p4-src/stat4_pwd/anomaly.txt";
+            std::string p4file = "src/traffic-control/examples/p4-src/stat4_ds/stat4_ds.json";
+            std::string file = "src/traffic-control/examples/p4-src/stat4_ds/anomaly.txt";
             customQueue2->SetAttribute("MaxQueueSize", UintegerValue(1));
             if(deprioEnabled){
                 NS_LOG_INFO ("Deprioritization Enabled.");
-                file = "src/traffic-control/examples/p4-src/stat4_pwd/entropy_deprio_subhash.txt";
+                file = "src/traffic-control/examples/p4-src/stat4_ds/entropy_deprio_subhash.txt";
                 customQueue2->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
                 suffix = "stat4-deprio";
             } 
             if (dropEnabled){
                 NS_LOG_INFO ("Dropping Enabled.");
-                file = "src/traffic-control/examples/p4-src/stat4_pwd/entropy_drop_subhash.txt";
+                file = "src/traffic-control/examples/p4-src/stat4_ds/entropy_drop_subhash.txt";
                 suffix = "stat4-drop";
             }   
             customQueue2->CreateP4Pipe (p4file, file);
@@ -325,6 +379,9 @@ int main(int argc, char *argv[])
     Ipv4AddressHelper address;
     address.SetBase("10.0.0.0", "255.255.255.0");  // Client and Router subnet
     Ipv4InterfaceContainer clientRouterInterfaces = address.Assign(clientRouterDevices);
+
+    address.SetBase("10.0.1.0", "255.255.255.0");  // Client and Router subnet
+    Ipv4InterfaceContainer clientLfaRouterInterfaces = address.Assign(clientLfaRouterDevices);
 
     // Attacker and router
     address.SetBase("11.0.0.0", "255.255.255.0");
@@ -399,24 +456,94 @@ int main(int argc, char *argv[])
     StartFlows(serverNodesAtk, clientNode, routerServerInterfacesAtk);
 
     if(dosEnabled){
-        // StartDoS(serverNodes1, attackerNode, routerServerInterfaces1, 20, 35, 50000); //to keep same IP for analysis
-        // StartDoS(serverNodes1, attackerNode, routerServerInterfaces1, 55, 70, 60000); //to keep same IP for analysis
-        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 30.0, 40.0, 40000, 2); //to keep same IP for analysis
-        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 60.0, 70.0, 49000, 2); //to keep same IP for analysis
-        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 90.0, 100.0, 44000, 2); //to keep same IP for analysis
-        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 120.0, 130.0, 46000, 2); //to keep same IP for analysis
-
-        // StartDoS(serverNodes1, attackerNode, routerServerInterfaces1, 30.0, 40.0, 40000, 2); //to keep same IP for analysis
-        // StartDoS(serverNodes1, attackerNode, routerServerInterfaces1, 60.0, 70.0, 49000, 2); //to keep same IP for analysis
-        // StartDoS(serverNodes1, attackerNode, routerServerInterfaces1, 90.0, 100.0, 44000, 2); //to keep same IP for analysis
-        // StartDoS(serverNodes1, attackerNode, routerServerInterfaces1, 120.0, 130.0, 46000, 2); //to keep same IP for analysis
-
+        std::string datarate = "40Mbps";
+        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 30.0, 40.0, 40000, 2, datarate); //to keep same IP for analysis
+        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 60.0, 70.0, 49000, 2, datarate); //to keep same IP for analysis
+        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 90.0, 100.0, 44000, 2, datarate); //to keep same IP for analysis
+        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 120.0, 130.0, 46000, 2, datarate); //to keep same IP for analysis
         NS_LOG_INFO("DoS Attack Enabled.");
     }
     if(lfaEnabled){
-        StartLFA(serverNodes1, attackerNode, routerServerInterfaces1); //TODO: Not implemented yet
+        // suffix = "lfa-drop";
+        std::string datarate = "20Kbps";
+        StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes7, clientLfaNodes, routerServerInterfaces7, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes6, clientLfaNodes, routerServerInterfaces6, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes5, clientLfaNodes, routerServerInterfaces5, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes4, clientLfaNodes, routerServerInterfaces4, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes3, clientLfaNodes, routerServerInterfaces3, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, 30.0, 40.0, 1000, datarate);
+        StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 30.0, 40.0, 1000, datarate);
+
+        StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes7, clientLfaNodes, routerServerInterfaces7, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes6, clientLfaNodes, routerServerInterfaces6, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes5, clientLfaNodes, routerServerInterfaces5, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes4, clientLfaNodes, routerServerInterfaces4, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes3, clientLfaNodes, routerServerInterfaces3, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, 60.0, 70.0, 8000, datarate);
+        StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 60.0, 70.0, 8000, datarate);
+
+        StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes7, clientLfaNodes, routerServerInterfaces7, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes6, clientLfaNodes, routerServerInterfaces6, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes5, clientLfaNodes, routerServerInterfaces5, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes4, clientLfaNodes, routerServerInterfaces4, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes3, clientLfaNodes, routerServerInterfaces3, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, 90.0, 100.0, 15000, datarate);
+        StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 90.0, 100.0, 15000, datarate);
+
+        StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes7, clientLfaNodes, routerServerInterfaces7, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes6, clientLfaNodes, routerServerInterfaces6, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes5, clientLfaNodes, routerServerInterfaces5, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes4, clientLfaNodes, routerServerInterfaces4, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes3, clientLfaNodes, routerServerInterfaces3, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, 120.0, 130.0, 22000, datarate);
+        StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 120.0, 130.0, 22000, datarate);
         NS_LOG_INFO("Link Flooding Attack Enabled.");
     }
+    if(mixedAttacksEnabled){
+        // suffix = "mixed-attacks-drop";
+        std::string datarate = "40Mbps"; //DoS 5 secs
+        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 30.0, 35.0, 40000, 2, datarate); //to keep same IP for analysis
+
+        datarate = "10Kbps"; //LFA 10 secs
+        double start = 55.0;
+        double finish = 65.0;
+        StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes7, clientLfaNodes, routerServerInterfaces7, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes6, clientLfaNodes, routerServerInterfaces6, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes5, clientLfaNodes, routerServerInterfaces5, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes4, clientLfaNodes, routerServerInterfaces4, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes3, clientLfaNodes, routerServerInterfaces3, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, start, finish, 1000, datarate);
+
+        datarate = "20Mbps"; //DoS 10 secs
+        StartDoS(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 85.0, 95.0, 44000, 2, datarate); //to keep same IP for analysis
+
+        datarate = "20Kbps"; //LFA 15 secs
+        start =115.0;
+        finish = 130.0;
+        StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes7, clientLfaNodes, routerServerInterfaces7, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes6, clientLfaNodes, routerServerInterfaces6, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes5, clientLfaNodes, routerServerInterfaces5, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes4, clientLfaNodes, routerServerInterfaces4, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes3, clientLfaNodes, routerServerInterfaces3, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, start, finish, 1000, datarate);
+        StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, start, finish, 1000, datarate);
+
+        NS_LOG_INFO("Mixed Attacks Enabled.");
+    }
+    
 
     // csma.EnablePcapAll(outPcap+"/packets");  // Trace packets on server side
     p2p2.EnablePcap(outPcap+suffix, router3Router4Devices.Get(1), true);
