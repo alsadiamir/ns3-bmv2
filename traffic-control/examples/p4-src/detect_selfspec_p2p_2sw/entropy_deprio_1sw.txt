@@ -1,5 +1,0 @@
-register_write deprio 0 1
-register_write mode_s 0 3
-register_write stage_s 0 1
-table_add MyIngress.window_track MyIngress.track_time 0.0.0.0/0 => 
-table_add MyIngress.entropy_track MyIngress.track_time 10.0.0.0/8 => 
