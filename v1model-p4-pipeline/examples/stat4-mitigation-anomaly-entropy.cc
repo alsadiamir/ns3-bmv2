@@ -64,7 +64,7 @@ void StartVolumetricFlow(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4In
         OnOffHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
         // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
         // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("7.5Kbps")));  // Data rate
+        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("1Mbps")));  // Data rate
         clientHelper.SetAttribute("PacketSize", UintegerValue(256));  // Packet size
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
@@ -84,12 +84,10 @@ int main(int argc, char *argv[])
     std::string outPcap = "trace-data/anomaly-entropy/withattack";
     bool p4Enabled = false;
     bool attackEnabled = false;
-    bool deprioEnabled = false;
     
     CommandLine cmd;
     cmd.AddValue ("outPcap", "Simulation PCAP Destination folder", outPcap);
     cmd.AddValue ("p4Enabled", "Enable P4", p4Enabled);
-    cmd.AddValue ("deprioEnabled", "Enable Deprioritization, Default DROP", deprioEnabled);
     cmd.AddValue ("attackEnabled", "Enable Attack", attackEnabled);
     cmd.Parse (argc, argv);
 
@@ -125,12 +123,12 @@ int main(int argc, char *argv[])
     routerToServers6.Add(serverNodes6);
 
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("1Mbps"));
-    p2p.SetChannelAttribute("Delay", TimeValue(Seconds(20)));
+    p2p.SetDeviceAttribute("DataRate", StringValue("3Mbps"));
+    p2p.SetChannelAttribute("Delay", TimeValue(NanoSeconds(20)));
 
     // Setup CSMA attributes
     CsmaHelper csma;
-    csma.SetChannelAttribute("DataRate", StringValue("1Gbps"));
+    csma.SetChannelAttribute("DataRate", StringValue("3Mbps"));
     csma.SetChannelAttribute("Delay", TimeValue(NanoSeconds(20)));
 
     // Install CSMA devices on the nodes
@@ -169,16 +167,7 @@ int main(int argc, char *argv[])
         p2pDevice->SetQueue(customQueue);
 
         Ptr<V1ModelP4Queue> customQueue2 = CreateObject<V1ModelP4Queue> ();
-        std::string file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy.txt";
-        if(deprioEnabled){
-            NS_LOG_INFO ("Deprioritization Enabled.");
-            file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy_deprio.txt";
-            customQueue2->SetAttribute("MaxQueueSize", UintegerValue(1000));
-            customQueue2->SetAttribute("MinThreshold", UintegerValue(500));
-            customQueue2->SetAttribute("MaxThreshold", UintegerValue(800));
-            customQueue2->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
-        }    
-        customQueue2->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/detect_selfspec_p2p_2sw.json", file);
+        customQueue2->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/detect_selfspec_p2p_2sw.json", "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy.txt");
         Ptr<PointToPointNetDevice> p2pDevice2 = r2Device->GetObject<PointToPointNetDevice> ();
         p2pDevice2->SetQueue(customQueue2);
     }
@@ -234,7 +223,7 @@ int main(int argc, char *argv[])
     StartFlows(serverNodes6, clientNode, routerServerInterfaces6);
 
     if(attackEnabled){
-        StartVolumetricFlow(serverNodes2, clientNode, routerServerInterfaces2); //to keep same IP for analysis
+        StartVolumetricFlow(serverNodes3, clientNode, routerServerInterfaces2); //to keep same IP for analysis
         NS_LOG_INFO("Attack Enabled.");
     }
     csma.EnablePcapAll(outPcap+"/packets");  // Trace packets on server side

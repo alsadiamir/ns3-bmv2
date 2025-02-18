@@ -247,6 +247,7 @@ namespace ns3 {
       deparser->deparse(packet.get());
       if (priority == 1) {
         isACCTurbo = true;
+        // std::cout << "IS accturbo" << std::endl;
       }
     } while (priority == 1);
 
@@ -254,24 +255,13 @@ namespace ns3 {
       uint32_t ipDst = phv->get_field("ipv4.dstAddr").get_uint();
       std::cout << "Egress spec: " << egress_spec << " " << IntToIp(ipDst) << std::endl;
     } 
-    // else {
-    //   if(egress_spec == 3) {
-    //     if (isACCTurbo == true){
-    //       uint32_t dst0 = phv->get_field("ipv4.dst0").get_uint();
-    //       uint32_t dst1 = phv->get_field("ipv4.dst1").get_uint();
-    //       uint32_t dst2 = phv->get_field("ipv4.dst2").get_uint();
-    //       uint32_t dst3 = phv->get_field("ipv4.dst3").get_uint();
-    //       std::cout << "Egress spec: " << egress_spec << " " << dst0 << "." << dst1 << "." << dst2 << "." << dst3 << std::endl;
-    //     } else{
-    //       uint32_t ipDst = phv->get_field("ipv4.dstAddr").get_uint();
-    //       std::cout << "Egress spec: " << egress_spec << " " << IntToIp(ipDst) << std::endl;
-    //     }
-
-    //   } 
-    // }
 
     BMELOG(packet_out, *packet);
     BMLOG_DEBUG_PKT(*packet, "Transmitting packet");
+
+    uint32_t protocol = phv->get_field("ipv4.protocol").get_uint();
+    std_meta.instance_type = protocol;
+    std_meta.priority = priority;
 
     return get_ns3_packet(std::move(packet));
   }

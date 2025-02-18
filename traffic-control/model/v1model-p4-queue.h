@@ -28,9 +28,12 @@
 #include "ns3/simulator.h"
 #include "ns3/v1model-p4-pipeline.h"
 #include "ns3/random-variable-stream.h"
+#include "ns3/drop-tail-queue.h"
 #include <array>
 #include <string>
 #include <list>
+#include <iostream>
+#include <fstream>
 
 namespace ns3 {
 
@@ -64,13 +67,18 @@ namespace ns3 {
 
     /// Get the deprioritization enabled flag
     bool GetDeprioritizationEnabled (void) const;
+    bool GetLogEnabled (void) const;
 
     /// Set the deprioritization enabled flag
     void SetDeprioritizationEnabled (bool deprioritizationEnabled);
 
+    void SetOutPath (std::string outPath);
+
     void SetMaxQueueSize (uint32_t maxQueueSize);
     void SetMinThreshold (uint32_t minThreshold);
     void SetMaxThreshold (uint32_t maxThreshold);
+    void SetLogEnabled (bool logEnabled);
+
 
     virtual bool Enqueue (Ptr<Packet> packet) override
     {
@@ -82,81 +90,180 @@ namespace ns3 {
       return DoDequeue ();
     }
 
+    void
+    LogOnFile (uint32_t priority, uint32_t protocol, std::string phase, bool dropped = false)
+    {
+      if(m_logEnabled == false) {
+        return;
+      } else{
+        std::ofstream m_outputFile(m_outPath, std::ios::app);  // Open file in append mode
+        std::string proto = "IPv4";
+        std::string msgStart = "Enqueued";
+        if (protocol == 17) {
+          proto = "UDP"; 
+        } else if (protocol == 6) {
+          proto = "TCP";
+        }
+
+        if (m_outputFile.is_open()) {
+          if(dropped) {
+            m_outputFile << phase << " Dropped packet with protocol: " << proto << std::endl;
+          } else {
+            if (phase == "[DEQUEUE]"){
+              msgStart = "Dequeued";
+            }
+            m_outputFile << phase << " " << msgStart << " packet in (prio" << priority << ") with protocol: " << proto << std::endl;
+            m_outputFile << "Time:" << Simulator::Now().GetSeconds() << " QUEUE (prio0): " << m_priorityQueue1->GetNPackets() << " QUEUE (prio1): " << m_priorityQueue2->GetNPackets() << " QUEUE (prio2): " << m_priorityQueue3->GetNPackets() << " QUEUE (prio3): " << m_priorityQueue4->GetNPackets() << std::endl;
+            m_outputFile.close();  // Close file
+          }
+        }
+        m_outputFile.close();  // Close file
+      }
+    }
+
+    void DebugStat4(std::string port, std::string log_file, std::string msg){
+      std::ofstream outputFile(log_file, std::ios::app);  // Open file in append mode
+      if (outputFile.is_open()) {
+        outputFile << msg << Simulator::Now().GetSeconds() << std::endl;
+      }
+      std::string cmd = "echo \"register_read bins_after_attack_s\" | simple_switch_CLI --thrift-port "+port+" >> " + log_file;
+      std::system(cmd.c_str());
+      cmd = "echo \"register_read current_spec_packets_s\" | simple_switch_CLI --thrift-port "+port+" >> " + log_file;
+      std::system(cmd.c_str());
+    }
+
     virtual bool DoEnqueue (Ptr<Packet> packet)
     {
       std_meta_t std_meta;
-      std_meta.ingress_global_timestamp = Simulator::Now ().GetMicroSeconds ();
+      uint64_t timeValue = Simulator::Now().GetMicroSeconds();
+      uint64_t least48Bits = timeValue & 0xFFFFFFFFFFFF; // Mask for 48 bits
+      std_meta.ingress_global_timestamp = least48Bits;
+      // if(Simulator::Now().GetSeconds() > 30){
+      //   std::cout << "Time: " << std_meta.ingress_global_timestamp << std::endl;
+      // }
+      std_meta.packet_length = packet->GetSize ();
       Ptr<Packet> new_packet = m_p4Pipe->process_pipeline(packet, std_meta, 0, 0);
-      
-      if(m_deprioritizationEnabled == true) {
-          // uint32_t queueSize = GetNPackets ();
-  
-          // // RED Drop logic
-          // if (queueSize >= m_maxQueueSize)
-          //   {
-          //     std::cout << "Queue full! Dropping packet" << std::endl;
-          //     return false;  // Drop packet if the queue is full
-          //   }
-          
-          // double dropProb = CalculateDropProbability (queueSize, std_meta.egress_spec);
-
-          // // if (dropProb > 0) {
-          // //   std::cout << "Queue Size: " << queueSize << " Drop probability: " << dropProb << " Priority: " << std_meta.egress_spec << std::endl;
-          // // }
-          // // std::cout << "Queue Size: " << queueSize << " Drop probability: " << dropProb << std::endl;
-
-          // // Randomly drop packet based on probability
-          // if (dropProb > 0.0 && m_rand->GetValue () < dropProb)
-          //   {
-          //     std::cout << "Dropping packet based on RED probability" << " Priority: " << std_meta.egress_spec << std::endl;
-          //     return false;  // Drop packet
-          //   }
-          // return Queue<Packet>::DoEnqueue (Tail (), new_packet);
-          
-          // uint32_t queueSize = m_queue.size ();
-          // if (queueSize > 10) {
-          //   std::cout << "Queue Size: " << m_queue.size () << std::endl;
-          // }
-          auto it = m_queue.begin ();
-          while (it != m_queue.end () && it->second <= std_meta.egress_spec)
-            {
-              ++it;  // Find the correct position to insert based on priority
-            }
-          
-          // Insert the packet with its priority in the correct position
-          m_queue.insert (it, std::make_pair (new_packet, std_meta.egress_spec));
-          
-          // Ptr<Packet> toEnqueue = m_queue.front ().first;
-
-          return Queue<Packet>::DoEnqueue (Tail (), new_packet);
+      bool result = false;
+      uint16_t priority = std_meta.egress_spec; // Dummy logic for assigning priority
+      uint16_t spec = std_meta.priority;
+      if(spec == 4){
+        DebugStat4("9090", m_outPath, "Spike: ");
+      } 
+      if(spec == 5){
+        DebugStat4("9091", m_outPath, "UDP-flood 1: ");
+      }  
+      if(spec == 6){
+        DebugStat4("9091", m_outPath, "UDP-flood 2: ");
+      }    
+      if(spec == 7){
+        DebugStat4("9091", m_outPath, "LFA: ");
+      } 
+      if(spec == 3){
+        std::string cmd = "echo \"************************************************************ Simulation Time: " 
+                  + std::to_string(ns3::Simulator::Now().GetSeconds()) 
+                  + "s\" >> " + m_outPath;
+        std::system(cmd.c_str());
+        cmd = "echo \"************************************************************ Simulation Time: " 
+                  + std::to_string(ns3::Simulator::Now().GetSeconds()) 
+                  + "s\" >> " + m_outPath+".log";
+        std::system(cmd.c_str());
+        cmd = "echo \"Registers in specializing switch: \" >> " + m_outPath+".log";
+        std::system(cmd.c_str()); 
+        cmd = "echo \"register_read tmp_stats_freq_internal\" | simple_switch_CLI --thrift-port 9090 >> " + m_outPath+".log";
+        std::system(cmd.c_str());
+        cmd = "echo \"Specialization statistics: \" >> " + m_outPath+".log";
+        std::system(cmd.c_str()); 
+        cmd = "echo \"register_read nval_despec\" | simple_switch_CLI --thrift-port 9090 >> " + m_outPath+".log";
+        std::system(cmd.c_str());
       }
-      else {
-        if(std_meta.egress_spec == 511) {
-            std::cout << "Dropped packet!" << std::endl;
+      if(m_deprioritizationEnabled == true) {   
+        switch (priority)
+        {
+            case 0:
+                if(m_priorityQueue1->GetNPackets() >= m_maxQueueSize){
+                  LogOnFile(priority, std_meta.instance_type, "[ENQUEUE]", true);
+                  return false;
+                }
+                result = m_priorityQueue1->Enqueue (new_packet);
+                break;
+            case 1:
+                if(m_priorityQueue2->GetNPackets() >= m_maxQueueSize){
+                  LogOnFile(priority, std_meta.instance_type, "[ENQUEUE]", true);
+                  return false;
+                }
+                result = m_priorityQueue2->Enqueue (new_packet);
+                break;
+            case 2:
+                if(m_priorityQueue3->GetNPackets() >= m_maxQueueSize){
+                  LogOnFile(priority, std_meta.instance_type, "[ENQUEUE]", true);
+                  return false;
+                }
+                result = m_priorityQueue3->Enqueue (new_packet);
+                break;
+            default:
+                if(m_priorityQueue4->GetNPackets() >= m_maxQueueSize){
+                  LogOnFile(priority, std_meta.instance_type, "[ENQUEUE]", true);
+                  return false;
+                }
+                result = m_priorityQueue4->Enqueue (new_packet);
+                break;
+        }
+        if (priority > 3){
+          priority = 3;
+        }
+        LogOnFile(priority, std_meta.instance_type, "[ENQUEUE]", false);
+        return result;
+      }               
+      else {       
+        if(priority == 511) {
+            // std::cout << "Dropped packet because P4 said so!" << std::endl;
             return false;
-          } 
-        return Queue<Packet>::DoEnqueue (Tail (), new_packet);
+        } else if (priority == 0){
+          result = m_priorityQueue1->Enqueue (new_packet);
+        } else{
+          result = m_priorityQueue2->Enqueue (new_packet);
+        }
+        // if(m_priorityQueue1->GetNPackets() >= m_maxQueueSize){
+        //   LogOnFile(priority, std_meta.instance_type, "[ENQUEUE]", true);
+        //   return false;
+        // }
+        // result = m_priorityQueue1->Enqueue (new_packet);
+        return result;
       }
       return false;
     }
 
     virtual Ptr<Packet> DoDequeue (void)
     {
-      
-      // uint32_t queueSize = GetNPackets ();
-      // std::cout << "Out Queue Size: " << queueSize << std::endl;
-      if(m_deprioritizationEnabled == true) {
-        if (m_queue.empty ()) 
+        Ptr<Packet> packet = nullptr;
+        uint32_t priority = 4;
+
+        // Check highest priority first, moving down to lowest
+        if (!m_priorityQueue1->IsEmpty ())
         {
-          return 0;
+            priority = 0;
+            packet = m_priorityQueue1->Dequeue ();
         }
-        Ptr<Packet> packet = m_queue.front ().first;
-        // uint32_t priority = m_queue.front ().second;
-        // std::cout << "Dequeued packet with priority: " << priority << std::endl;
-        m_queue.pop_front ();
+        else if (!m_priorityQueue2->IsEmpty ())
+        {
+            priority = 1;
+            packet = m_priorityQueue2->Dequeue ();
+        }
+        else if (!m_priorityQueue3->IsEmpty ())
+        {
+            priority = 2;
+            packet = m_priorityQueue3->Dequeue ();
+        }
+        else if (!m_priorityQueue4->IsEmpty ())
+        {
+            priority = 3;
+            packet = m_priorityQueue4->Dequeue ();
+        }
+        if(priority < 4){
+          LogOnFile(priority, 0, "[DEQUEUE]", false);
+        }
+
         return packet;
-      }
-      return Queue<Packet>::DoDequeue (Head ()); // no deprioritization
     }
     
     virtual Ptr<const Packet> Peek (void) const override
@@ -198,23 +305,31 @@ namespace ns3 {
     }
     
     private:
-      using Queue<Packet>::Head;
-      using Queue<Packet>::Tail;
-      using Queue<Packet>::DoEnqueue;
-      using Queue<Packet>::DoDequeue;
-      using Queue<Packet>::DoRemove;
-      using Queue<Packet>::DoPeek;
+      // using Queue<Packet>::Head;
+      // using Queue<Packet>::Tail;
+      // using Queue<Packet>::DoEnqueue;
+      // using Queue<Packet>::DoDequeue;
+      // using Queue<Packet>::DoRemove;
+      // using Queue<Packet>::DoPeek;
       V1ModelP4Pipe *m_p4Pipe;            //!< The P4 pipeline
       std::string m_jsonFile;      //!< The bmv2 JSON file (generated by the p4c-bm backend)
       std::string m_commandsFile;  //!< The CLI commands file
+      std::string m_outPath;  // Output file path
       int m_port;             //!< The port number
       int64_t m_startingTime;
-      std::list<std::pair<Ptr<Packet>, uint8_t>> m_queue;  // List of packets and their priority
-      bool m_deprioritizationEnabled;  //!< Enable deprioritization of packets
+      std::list<std::pair<Ptr<Packet>,uint8_t>> m_queue;  // List of packets and their priority
+      bool m_deprioritizationEnabled = false;  //!< Enable deprioritization of packets
+      bool m_logEnabled = false;  // Enable logging
       uint32_t m_minThreshold;  // Minimum threshold for RED
       uint32_t m_maxThreshold;  // Maximum threshold for RED / 4
       uint32_t m_maxQueueSize;  // Maximum queue size
       Ptr<UniformRandomVariable> m_rand = CreateObject<UniformRandomVariable> (); // Random variable for probabilistic drops
+
+      Ptr<DropTailQueue<Packet>> m_priorityQueue1; // Highest priority
+      Ptr<DropTailQueue<Packet>> m_priorityQueue2;
+      Ptr<DropTailQueue<Packet>> m_priorityQueue3;
+      Ptr<DropTailQueue<Packet>> m_priorityQueue4; // Lowest priority
+      // std::ofstream m_outputFile("output.txt");
   };
 }
 

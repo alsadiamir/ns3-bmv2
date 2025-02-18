@@ -35,6 +35,8 @@ header ipv4_h {
     bit<8>  protocol;
     bit<16> hdr_checksum;
     bit<32> src_addr;
+    // bit<8> first_byte;
+    // bit<8> second_byte;
     bit<8> dst0;
     bit<8> dst1;
     bit<8> dst2;
@@ -303,10 +305,10 @@ control MyIngress(inout headers hdr,
         bit<32> data2;
         bit<32> data3;
         bit<32> distance = 0;
-        bit<32> dst0 = (bit<32>)hdr.ipv4.dst0;  // Assuming `dst0` is the first 32 bits of the IPv4 destination
-        bit<32> dst1 = (bit<32>)hdr.ipv4.dst1;  // Assuming `dst1` is the second 32 bits of the IPv4 destination
-        bit<32> dst2 = (bit<32>)hdr.ipv4.dst2;  // Assuming `dst2` is the third 32 bits of the IPv4 destination
-        bit<32> dst3 = (bit<32>)hdr.ipv4.dst3;  // Assuming `dst3` is the fourth 32 bits of the IPv4 destination
+        bit<32> dst0 = (bit<32>)hdr.ipv4.dst2;  // Assuming `dst0` is the first 32 bits of the IPv4 destination
+        bit<32> dst1 = (bit<32>)hdr.ipv4.dst3;  // Assuming `dst1` is the second 32 bits of the IPv4 destination
+        bit<32> dst2 = (bit<32>)hdr.transport.sport;  // Assuming `dst2` is the third 32 bits of the IPv4 destination
+        bit<32> dst3 = (bit<32>)hdr.transport.dport;  // Assuming `dst3` is the fourth 32 bits of the IPv4 destination
 
         bit<32> register_value;
         bit<8> current_value;

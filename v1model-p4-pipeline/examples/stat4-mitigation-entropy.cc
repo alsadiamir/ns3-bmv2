@@ -36,19 +36,14 @@ void StartFlows(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCo
 
         // Install TCP OnOff client on the client node (to act as TCP sender)
         OnOffHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(i + 1), port));
-        clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-        std::string dataRate = "50Kbps";
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate(dataRate)));  // Data rate
+        // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+        // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("50Kbps")));  // Data rate
         clientHelper.SetAttribute("PacketSize", UintegerValue(1024));  // Packet size
         clientHelper.SetAttribute("MaxBytes", UintegerValue(250000)); // Max payload size in bytes
-        // double totalBitsToSend = 2240 * 8;  // Convert bytes to bits
-        // double rateInBps = atof(dataRate.c_str()) * 1e6;  // Convert Mbps to bps
-        // double transmissionTime = totalBitsToSend / rateInBps;  // Transmission time in seconds
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
-        clientApp.Start(Seconds(2.0));  // Start each flow with a slight delay
-        // clientApp.Stop(Seconds(2.0 + transmissionTime + 0.1*(i/36)));
+        clientApp.Start(Seconds(2.0 + i));  // Start each flow with a slight delay
         // StartBgSynApp(serverNodes.Get(i), clientNode, routerServerInterfaces, 2.0 + i);
     }
 }
@@ -67,10 +62,10 @@ void StartVolumetricFlow(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4In
 
         // Install TCP OnOff client on the client node (to act as TCP sender)
         OnOffHelper clientHelper("ns3::TcpSocketFactory", InetSocketAddress(routerServerInterfaces.GetAddress(2), port));
-        clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("7.5Kbps")));  // Data rate
-        clientHelper.SetAttribute("PacketSize", UintegerValue(1024));  // Packet size
+        // clientHelper.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+        // clientHelper.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+        clientHelper.SetAttribute("DataRate", DataRateValue(DataRate("5Mbps")));  // Data rate
+        clientHelper.SetAttribute("PacketSize", UintegerValue(256));  // Packet size
 
         ApplicationContainer clientApp = clientHelper.Install(clientNode);
         clientApp.Start(Seconds(5.0));  // Start each flow with a slight delay
@@ -88,13 +83,11 @@ int main(int argc, char *argv[])
 {
     std::string outPcap = "trace-data/entropy/withattack";
     bool p4Enabled = false;
-    bool deprioEnabled = false;
     bool attackEnabled = false;
     
     CommandLine cmd;
     cmd.AddValue ("outPcap", "Simulation PCAP Destination folder", outPcap);
     cmd.AddValue ("p4Enabled", "Enable P4", p4Enabled);
-    cmd.AddValue ("deprioEnabled", "Enable Deprioritization, Default DROP", deprioEnabled);
     cmd.AddValue ("attackEnabled", "Enable Attack", attackEnabled);
     cmd.Parse (argc, argv);
 
@@ -128,12 +121,12 @@ int main(int argc, char *argv[])
     routerToServers6.Add(serverNodes6);
 
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("1.5Mbps"));
+    p2p.SetDeviceAttribute("DataRate", StringValue("3Mbps"));
     p2p.SetChannelAttribute("Delay", TimeValue(NanoSeconds(20)));
 
     // Setup CSMA attributes
     CsmaHelper csma;
-    csma.SetChannelAttribute("DataRate", StringValue("1Gbps"));
+    csma.SetChannelAttribute("DataRate", StringValue("3Mbps"));
     csma.SetChannelAttribute("Delay", TimeValue(NanoSeconds(20)));
 
     // Install CSMA devices on the nodes
@@ -163,16 +156,7 @@ int main(int argc, char *argv[])
 
     if (p4Enabled){
         Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
-        std::string file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy_1sw.txt";
-        if(deprioEnabled){
-            NS_LOG_INFO ("Deprioritization Enabled.");
-            file = "src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/entropy_deprio_1sw.txt";
-            customQueue->SetAttribute("MaxQueueSize", UintegerValue(10000));
-            // customQueue->SetAttribute("MinThreshold", UintegerValue(50));
-            // customQueue->SetAttribute("MaxThreshold", UintegerValue(80));
-            customQueue->SetAttribute("DeprioritizationEnabled", BooleanValue(true));
-        } 
-        customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p_2sw/detect_selfspec_p2p_2sw.json", file);
+        customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/detect_selfspec_p2p/detect_selfspec_p2p.json", "src/traffic-control/examples/p4-src/detect_selfspec_p2p/entropy.txt");
         Ptr<PointToPointNetDevice> p2pDevice = rDevice->GetObject<PointToPointNetDevice> ();
         p2pDevice->SetQueue(customQueue);
         NS_LOG_INFO ("P4 Enabled.");

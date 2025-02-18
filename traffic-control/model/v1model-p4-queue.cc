@@ -43,12 +43,19 @@ namespace ns3 {
       .AddAttribute ( "MinThreshold", "The minimum threshold for the queue",
                     UintegerValue (70), MakeUintegerAccessor (&V1ModelP4Queue::SetMinThreshold), MakeUintegerChecker<uint32_t> ())
       .AddAttribute ( "MaxThreshold", "The maximum threshold for the queue",
-                    UintegerValue (90), MakeUintegerAccessor (&V1ModelP4Queue::SetMaxThreshold), MakeUintegerChecker<uint32_t> ());
+                    UintegerValue (90), MakeUintegerAccessor (&V1ModelP4Queue::SetMaxThreshold), MakeUintegerChecker<uint32_t> ())
+      .AddAttribute ( "LogEnabled", "Enable logging of queue operations",
+                    BooleanValue (false), MakeBooleanAccessor (&V1ModelP4Queue::GetLogEnabled, &V1ModelP4Queue::SetLogEnabled), MakeBooleanChecker ());
     return tid;
   }
 
   V1ModelP4Queue::V1ModelP4Queue ()
   {
+    m_priorityQueue1 = CreateObject<DropTailQueue<Packet>> ();
+    m_priorityQueue2 = CreateObject<DropTailQueue<Packet>> ();
+    m_priorityQueue3 = CreateObject<DropTailQueue<Packet>> ();
+    m_priorityQueue4 = CreateObject<DropTailQueue<Packet>> ();
+
   }
 
   V1ModelP4Queue::~V1ModelP4Queue ()
@@ -100,7 +107,11 @@ namespace ns3 {
   V1ModelP4Queue::SetMaxQueueSize (uint32_t maxSize)
   {
     m_maxQueueSize = maxSize;
-    SetMaxSize (QueueSize(QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue1->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue2->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue3->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    m_priorityQueue4->SetMaxSize (QueueSize (QueueSizeUnit::PACKETS, maxSize));
+    // SetMaxSize (QueueSize(QueueSizeUnit::PACKETS, UINT32_MAX));
   }
 
   void 
@@ -113,6 +124,44 @@ namespace ns3 {
   V1ModelP4Queue::SetMaxThreshold (uint32_t maxThreshold)
   {
     m_maxThreshold = maxThreshold;
+  }
+
+  void
+  V1ModelP4Queue::SetOutPath (std::string outPath)
+  {
+    std::ofstream outputFile(outPath, std::ios::out);
+
+    // Check if the file was successfully opened
+    if (!outputFile) {
+        std::cerr << "Error opening output file!" << std::endl;
+    }
+    else{
+      outputFile << std::endl;
+      m_outPath = outPath;
+    }
+
+    std::ofstream outputFileLog(outPath+".log", std::ios::out);
+
+    // Check if the file was successfully opened
+    if (!outputFileLog) {
+        std::cerr << "Error opening output file .log!" << std::endl;
+    }
+    else{
+      outputFileLog << std::endl;
+    }
+    
+  }
+
+  bool
+  V1ModelP4Queue::GetLogEnabled (void) const
+  {
+    return m_logEnabled;
+  }
+
+  void
+  V1ModelP4Queue::SetLogEnabled (bool enabled)
+  {
+    m_logEnabled = enabled;
   }
 
 } // namespace ns3
