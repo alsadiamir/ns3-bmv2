@@ -17,13 +17,43 @@
 #include "ns3/traffic-control-helper.h"
 #include "ns3/point-to-point-module.h"
 #include "ns3/mpi-interface.h"
-
+#include "ns3/three-gpp-http-helper.h"
 
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("VolumetricMultiSpike");
 
-// Shared set to track used ports
+void StartHttpFlood(NodeContainer serverNodes, Ptr<Node> clientNode, 
+                    Ipv4InterfaceContainer routerServerInterfaces, double start, double finish, 
+                    uint16_t port, uint16_t addNum, std::string datarate)  
+{
+    // 📌 Create an HTTP Server
+    ThreeGppHttpServerHelper httpServerHelper(routerServerInterfaces.GetAddress(addNum));
+    ApplicationContainer serverApp = httpServerHelper.Install(serverNodes.Get(addNum - 1));
+    serverApp.Start(Seconds(start));
+    serverApp.Stop(Seconds(finish));
+
+    // 📌 Create an HTTP Client (Flooding)
+    ThreeGppHttpClientHelper httpClientHelper(InetSocketAddress(routerServerInterfaces.GetAddress(addNum), port));
+    uint16_t packetSize = 1500;  // Packet size in bytes
+
+    DataRate dataRateObj(datarate);
+    uint32_t packetSize = 1500;  // Packet size in bytes
+    double interval = (packetSize * 8.0) / dataRateObj.GetBitRate(); // Time between packets in seconds
+
+    // 🚀 Force rapid requests (disable user behavior delays)
+    httpClientHelper.SetAttribute("RequestInterval", TimeValue(Seconds(interval))); // 1ms between requests
+    httpClientHelper.SetAttribute("ObjectSizeMean", UintegerValue(1400)); // Maximize request size (~MTU)
+    httpClientHelper.SetAttribute("ObjectSizeStdDev", DoubleValue(0));  // Keep all requests same size
+    httpClientHelper.SetAttribute("NumRequests", UintegerValue(1000000)); // Simulate many requests
+    httpClientHelper.SetAttribute("PersistentConnection", BooleanValue(true)); // Keep TCP session open
+
+    ApplicationContainer clientApp = httpClientHelper.Install(clientNode);
+    clientApp.Start(Seconds(start));
+    clientApp.Stop(Seconds(finish));
+}
+
+    // Shared set to track used ports
 std::set<uint16_t> usedPorts;
 
 static std::map<uint32_t, uint32_t> interfacePacketCount; // Map to store packets per interface
@@ -74,7 +104,6 @@ void AttachRouterPacketCounter(Ptr<Node> routerNode, std::string path) {
     // Start periodic logging
     Simulator::Schedule(Seconds(1.0), &PrintRouterReceivedPacketRate, path);
 }
-
 
 static uint32_t packetsSent = 0;  // Variable to store the count of packets sent
 
@@ -177,8 +206,8 @@ void StartDoS(NodeContainer serverNodes, Ptr<Node> clientNode, Ipv4InterfaceCont
 }
 
 void StartDoSUdpClient(NodeContainer serverNodes, Ptr<Node> clientNode, 
-    Ipv4InterfaceContainer routerServerInterfaces, double start, double finish, 
-    uint16_t port, uint16_t addNum, std::string datarate) 
+                      Ipv4InterfaceContainer routerServerInterfaces, double start, double finish, 
+                      uint16_t port, uint16_t addNum, std::string datarate) 
 {
     // Install UDP Server on the target server node
     UdpServerHelper server(port);
@@ -190,7 +219,7 @@ void StartDoSUdpClient(NodeContainer serverNodes, Ptr<Node> clientNode,
     DataRate dataRateObj(datarate);
     uint32_t packetSize = 1500;  // Packet size in bytes
     double interval = (packetSize * 8.0) / dataRateObj.GetBitRate(); // Time between packets in seconds
-    std::cout << "Interval: " << interval << std::endl;
+    // std::cout << "Interval: " << interval << std::endl;
 
     // Install UDP Client on the attacking node
     UdpClientHelper client(InetSocketAddress(routerServerInterfaces.GetAddress(addNum), port));
@@ -264,48 +293,46 @@ void StartUdpFlows(NodeContainer serverNodes, NodeContainer clientNodes,
     Ipv4InterfaceContainer routerServerInterfaces, 
     double start, double finish, int startPort, std::string datarate) 
 {
-    int numFlows = 100;
+    int numFlows = 80;
     Ptr<UniformRandomVariable> random = CreateObject<UniformRandomVariable>();
+    
+    // Convert total data rate to bits per second
     DataRate totalDataRate(datarate);
-    uint64_t perAtkRateBps = totalDataRate.GetBitRate() / numFlows;  // Data rate per flow in bits per second
-    std::string perAtkRateStr = std::to_string(perAtkRateBps) + "bps"; // Convert back to string
+    uint64_t perFlowRateBps = totalDataRate.GetBitRate() / numFlows;
+    
+    // Calculate packet interval
+    uint32_t packetSize = 1472; // 1472 bytes payload + 28 bytes UDP/IP header = 1500 MTU
+    double interval = (packetSize * 8.0) / perFlowRateBps;
 
     for (int i = 0; i < numFlows; ++i) {
-        // Select random server and client nodes
         uint32_t serverIndex = random->GetInteger(0, serverNodes.GetN() - 1);
         uint32_t clientIndex;
 
         do {
             clientIndex = random->GetInteger(0, clientNodes.GetN() - 1);
-        } while (serverIndex == clientIndex); // Ensure client and server are different
+        } while (serverIndex == clientIndex);
 
         Ptr<Node> serverNode = serverNodes.Get(serverIndex);
         Ptr<Node> clientNode = clientNodes.Get(clientIndex);
 
         Ipv4Address serverIp = routerServerInterfaces.GetAddress(serverIndex);
-        uint16_t port = startPort + i; // Increment port for each flow
+        uint16_t port = startPort + i;
 
-        // Create a UDP sink on the server
+        // ✅ Create a UDP sink on the server
         PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), port));
         ApplicationContainer sinkApp = sinkHelper.Install(serverNode);
         sinkApp.Start(Seconds(start));
         sinkApp.Stop(Seconds(finish));
-    
-        // Convert DataRate to packet interval
-        DataRate dataRateObj(datarate);
-        uint32_t packetSize = 1500;  // Packet size in bytes
-        double interval = (packetSize * 8.0) / dataRateObj.GetBitRate(); // Time between packets in seconds
-        std::cout << "Interval: " << interval << std::endl;
-    
-        // Install UDP Client on the attacking node
+
+        // ✅ Install UDP Client on the attacking node
         UdpClientHelper client(InetSocketAddress(serverIp, port));
-        client.SetAttribute("MaxPackets", UintegerValue(4294967295)); // Essentially unlimited packets
+        client.SetAttribute("MaxPackets", UintegerValue(4294967295)); // Unlimited packets (will stop when application stops)
         client.SetAttribute("Interval", TimeValue(Seconds(interval))); // Packet sending interval
-        client.SetAttribute("PacketSize", UintegerValue(packetSize-28)); // Packet size
-    
+        client.SetAttribute("PacketSize", UintegerValue(packetSize)); // 1472 payload + 28 header
+
         ApplicationContainer clientApp = client.Install(clientNode);
         clientApp.Start(Seconds(start));
-        clientApp.Stop(Seconds(finish));
+        clientApp.Stop(Seconds(finish));  // ✅ Ensures client stops sending exactly at `finish`
     }
 }
 
@@ -371,7 +398,7 @@ void UpdateCluster(){
 void DebugStat4(std::string port, std::string log_file){
     std::string cmd = "python3 /home/mininet/ns3-repos/ns-3-allinone/ns-3.29/src/bmv2-tools/debug_stat4.py --thrift-port "+port+" --log-file "+log_file;
     std::system(cmd.c_str());
-    Simulator::Schedule(Seconds(0.1), &DebugStat4, port, log_file);
+    // Simulator::Schedule(Seconds(0.1), &DebugStat4, port, log_file);
 }
 
 void LogPacketsStat4(std::string port, std::string log_file){
@@ -433,6 +460,8 @@ int main(int argc, char *argv[])
     bool accturboEnabled = false;
     bool dosEnabled = false;
     bool lfaEnabled = false;
+    bool httpFloodEnabled = false;
+    double interval = 10.0;
 
     Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1448));
     // Disabling Nagle's algorithm for all TCP sockets
@@ -447,9 +476,11 @@ int main(int argc, char *argv[])
     cmd.AddValue ("accturboEnabled", "Enable AccTurbo, Default FALSE", accturboEnabled);
     cmd.AddValue ("dosEnabled", "Enable DoS Attack", dosEnabled);
     cmd.AddValue ("lfaEnabled", "Enable Link Flooding Attack", lfaEnabled);
+    cmd.AddValue ("httpFloodEnabled", "Enable HTTP Flood Attack", httpFloodEnabled);
     cmd.AddValue ("bucketSize", "Bucket size (2 ^ bucketSize microseconds buckets)", bucketSize);
     cmd.AddValue ("packetsDelay", "Start drill-down after this number of packets", packetsDelay);
     cmd.AddValue ("datarate", "Attack datarate", datarate);
+    cmd.AddValue ("interval", "Interval for the attack", interval);
     cmd.Parse (argc, argv);
 
 
@@ -628,6 +659,8 @@ int main(int argc, char *argv[])
         atk_suffix = "lfa";
     } else if (dosEnabled == true){
         atk_suffix = "dos";
+    } else if (httpFloodEnabled == true){ 
+        atk_suffix = "httpFlood";
     }
 
     // Install Internet stack on all nodes
@@ -648,13 +681,15 @@ int main(int argc, char *argv[])
     internet.Install(serverNodes7);
     internet.Install(serverNodes8);
     internet.Install(serverNodesAtk);
+    int interval_trim = static_cast<int>(interval);
 
 
     NS_LOG_INFO ("Configure Tracing."); //Dummy P4 switch for reproducibility
     Ptr<V1ModelP4Queue> customQueue = CreateObject<V1ModelP4Queue> ();
     customQueue->CreateP4Pipe ("src/traffic-control/examples/p4-src/stat4_ds/stat4_ds.json", "src/traffic-control/examples/p4-src/stat4_ds/anomaly.txt");
-    customQueue->SetOutPath(outPcap+atk_suffix+"-stat4debug9090.txt");
+    customQueue->SetOutPath(outPcap+atk_suffix+"-"+std::to_string(interval_trim)+"-stat4debug9090.txt");
     Ptr<PointToPointNetDevice> p2pDevice = r1Device->GetObject<PointToPointNetDevice> ();
+    // Simulator::Schedule(Seconds(42), &DebugStat4, "9090", outPcap+atk_suffix+"-"+std::to_string(interval_trim)+"-stat4debug9090.log");
     Simulator::Schedule(Seconds(30), &LogPacketsStat4, "9090", outPcap+atk_suffix+"-stat4debug9090.log");
     Simulator::Schedule(Seconds(0), &SetupBucketSize, "9090", bucketSize);
     customQueue->SetAttribute("MaxQueueSize", UintegerValue(1));
@@ -678,7 +713,7 @@ int main(int argc, char *argv[])
                 suffix = "stat4-drop";
             }   
             customQueue2->CreateP4Pipe (p4file, file);
-            customQueue2->SetOutPath(outPcap+atk_suffix+"-stat4debug9091.txt");
+            customQueue2->SetOutPath(outPcap+atk_suffix+"-"+std::to_string(interval_trim)+"-stat4debug9091.txt");
             Ptr<PointToPointNetDevice> p2pDevice2 = r2Device->GetObject<PointToPointNetDevice> ();
             // Simulator::Schedule(Seconds(0), &DebugStat4, "9091", outPcap+"/stat4debug9091.log");
             Simulator::Schedule(Seconds(0), &SetupBucketSize, "9091", bucketSize);
@@ -774,7 +809,7 @@ int main(int argc, char *argv[])
 
     Ptr<Ipv4> ipv4Router4 = routerNode4->GetObject<Ipv4>();
     ipv4Router4->SetAttribute("IpForward", BooleanValue(true));
-    // AttachRouterPacketCounter(routerNode1, outPcap+atk_suffix);
+    // AttachRouterPacketCounter(routerNode4, outPcap+atk_suffix);
     // AttachRouterPacketCounter(routerNode4);
     // Ptr<NetDevice> clientRouterDevice = clientRouterDevices.Get(0);
 
@@ -793,10 +828,10 @@ int main(int argc, char *argv[])
 
     if(dosEnabled){
         std::string perAtkRateStr = datarate;
-        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 30.0, 40.0, 40000, 2, perAtkRateStr); //to keep same IP for analysis
-        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 70.0, 80.0, 49000, 2, perAtkRateStr); //to keep same IP for analysis
-        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 110.0, 120.0, 44000, 2, perAtkRateStr); //to keep same IP for analysis
-        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 150.0, 160.0, 46000, 2, perAtkRateStr); //to keep same IP for analysis
+        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 30.0, 30.0+interval, 40000, 2, perAtkRateStr); //to keep same IP for analysis
+        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 70.0, 70.0+interval, 49000, 2, perAtkRateStr); //to keep same IP for analysis
+        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 110.0, 110.0+interval, 44000, 2, perAtkRateStr); //to keep same IP for analysis
+        StartDoSUdpClient(serverNodesAtk, attackerNode, routerServerInterfacesAtk, 150.0, 150.0+interval, 46000, 2, perAtkRateStr); //to keep same IP for analysis
         NS_LOG_INFO("DoS Attack Enabled.");
         Simulator::Schedule(Seconds(0), &SetupAttackType, "9090", "1");
         Simulator::Schedule(Seconds(0), &SetupAttackType, "9091", "1");
@@ -807,7 +842,7 @@ int main(int argc, char *argv[])
         Simulator::Schedule(Seconds(0), &SetupAttackType, "9091", "2");
 
         std::string perAtkRateStr = datarate;
-        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 30.0, 40.0, 40000, perAtkRateStr);
+        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 30.0, 30.0+interval, 40000, perAtkRateStr);
         // StartRandomUdpFlow(serverNodesAtk, clientLfaNodes, 30.0, 40.0, perAtkRateStr);
         // StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 30.0, 40.0, 1000, perAtkRateStr);
         // StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 30.0, 40.0, 1000, perAtkRateStr);
@@ -819,7 +854,7 @@ int main(int argc, char *argv[])
         // StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, 30.0, 40.0, 1000, perAtkRateStr);
         // StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 30.0, 40.0, 1000, perAtkRateStr);
 
-        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 70.0, 80.0, 49000, perAtkRateStr);
+        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 70.0, 70.0+interval, 49000, perAtkRateStr);
         // StartRandomUdpFlow(serverNodesAtk, clientLfaNodes, 70.0, 80.0, perAtkRateStr);
         // StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 70.0, 80.0, 8000, perAtkRateStr);
         // StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 70.0, 80.0, 8000, perAtkRateStr);
@@ -831,7 +866,7 @@ int main(int argc, char *argv[])
         // StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, 70.0, 80.0, 8000, perAtkRateStr);
         // StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 70.0, 80.0, 8000, perAtkRateStr);
 
-        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 110.0, 120.0, 44000, perAtkRateStr);
+        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 110.0, 110.0+interval, 44000, perAtkRateStr);
         // StartRandomUdpFlow(serverNodesAtk, clientLfaNodes, 110.0, 120.0, perAtkRateStr);
         // StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 110.0, 120.0, 15000, perAtkRateStr);
         // StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 110.0, 120.0, 15000, perAtkRateStr);
@@ -843,7 +878,7 @@ int main(int argc, char *argv[])
         // StartCoremeltAttack(serverNodes2, clientLfaNodes, routerServerInterfaces2, 110.0, 120.0, 15000, perAtkRateStr);
         // StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 110.0, 120.0, 15000, perAtkRateStr);
 
-        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 150.0, 160.0, 46000, perAtkRateStr);
+        StartUdpFlows(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 150.0, 150.0+interval, 46000, perAtkRateStr);
         // StartRandomUdpFlow(serverNodesAtk, clientLfaNodes, 150.0, 160.0, perAtkRateStr);
         // StartCoremeltAttack(serverNodesAtk, clientLfaNodes, routerServerInterfacesAtk, 150.0, 160.0, 22000, perAtkRateStr);
         // StartCoremeltAttack(serverNodes8, clientLfaNodes, routerServerInterfaces8, 150.0, 160.0, 22000, perAtkRateStr);
@@ -856,7 +891,16 @@ int main(int argc, char *argv[])
         // StartCoremeltAttack(serverNodes1, clientLfaNodes, routerServerInterfaces1, 150.0, 160.0, 22000, perAtkRateStr);
         NS_LOG_INFO("Link Flooding Attack Enabled.");
     }
-
+    if(httpFloodEnabled){
+        std::string perAtkRateStr = datarate;
+        StartHttpFlood(serverNodesAtk, clientNode, routerServerInterfacesAtk, 30.0, 30.0+interval, 808, 2, perAtkRateStr);
+        StartHttpFlood(serverNodesAtk, clientNode, routerServerInterfacesAtk, 70.0, 70.0+interval, 818, 2, perAtkRateStr);
+        StartHttpFlood(serverNodesAtk, clientNode, routerServerInterfacesAtk, 110.0, 110.0+interval, 911, 2, perAtkRateStr);
+        StartHttpFlood(serverNodesAtk, clientNode, routerServerInterfacesAtk, 150.0, 150.0+interval, 737, 2, perAtkRateStr);
+        NS_LOG_INFO("HTTP Flood Attack Enabled.");
+        Simulator::Schedule(Seconds(0), &SetupAttackType, "9090", "3");
+        Simulator::Schedule(Seconds(0), &SetupAttackType, "9091", "3");
+    }
 
     // csma.EnablePcapAll(outPcap+"/packets");  // Trace packets on server side
     p2p2.EnablePcap(outPcap+suffix, router3Router4Devices.Get(1), true);
@@ -867,7 +911,7 @@ int main(int argc, char *argv[])
 
 
     // Run the simulation
-    Simulator::Stop(Seconds(170));
+    Simulator::Stop(Seconds(150+interval+10));
     Simulator::Run();
 
     Simulator::Destroy();
